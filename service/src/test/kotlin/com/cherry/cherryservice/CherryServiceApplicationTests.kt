@@ -1,10 +1,10 @@
-package com.cherry.cherryserver
+package com.cherry.cherryservice
 
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 
 @SpringBootTest
-class CherryServerApplicationTests {
+class CherryServiceApplicationTests {
 
     @Test
     fun contextLoads() {

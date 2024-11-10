@@ -1,11 +1,11 @@
-package com.cherry.cherryserver
+package com.cherry.cherryservice
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-class CherryServerApplication
+class CherryServiceApplication
 
 fun main(args: Array<String>) {
-    runApplication<CherryServerApplication>(*args)
+    runApplication<CherryServiceApplication>(*args)
 }
