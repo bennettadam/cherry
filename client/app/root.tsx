@@ -5,6 +5,7 @@ import {
 	Scripts,
 	ScrollRestoration,
 } from '@remix-run/react'
+import TopNav from '~/components/TopNav'
 
 import './tailwind.css'
 
@@ -30,5 +31,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-	return <Outlet />
+	return (
+		<div className="flex h-screen flex-col">
+			<TopNav />
+			<Outlet />
+		</div>
+	)
 }
