@@ -11,3 +11,9 @@ export class Route {
 		return '/configuration/properties'
 	}
 }
+
+export class APIRoute {
+	static get properties() {
+		return 'http://localhost:8080/api/v1/workspace/properties'
+	}
+}

@@ -5,7 +5,7 @@ import {
 } from '@remix-run/node'
 import { Form, Link, useLoaderData } from '@remix-run/react'
 import { projectStore } from '~/models/project.server'
-import { Route } from '../utility/Route'
+import { Route } from '../utility/Routes'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	const projectID = params.projectID!

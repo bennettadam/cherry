@@ -4,19 +4,11 @@ import type { TestCase } from '~/models/types'
 import { projectStore } from '~/models/project.server'
 import type { loader as projectLoader } from './$projectID'
 import { build } from 'vite'
-import { Route } from '../utility/Route'
+import { Route } from '../utility/Routes'
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const formData = await request.formData()
 	const projectID = params.projectID!
-
-	const testCase = projectStore.addTestCase(projectID, {
-		title: formData.get('title') as string,
-		description: formData.get('description') as string,
-		priority: formData.get('priority') as TestCase['priority'],
-		type: formData.get('type') as TestCase['type'],
-		steps: formData.get('steps') as string,
-	})
 
 	return redirect(Route.viewTests(projectID))
 }

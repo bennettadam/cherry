@@ -3,7 +3,7 @@ import Sidebar from '~/components/Sidebar'
 
 export default function ConfigurationLayout() {
 	return (
-		<div className="flex h-full">
+		<div className="flex">
 			<Sidebar
 				title="Configuration"
 				items={[{ to: '/configuration/properties', label: 'Properties' }]}

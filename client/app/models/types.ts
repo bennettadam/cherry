@@ -24,13 +24,33 @@ export interface TestCase {
 	createdAt: string
 }
 
-export type PropertyType = 'text' | 'number' | 'enum'
+export enum PropertyType {
+	text = 'TEXT',
+	number = 'NUMBER',
+	enum = 'ENUM',
+}
+
+export enum PropertyConfigurationSource {
+	system = 'SYSTEM',
+	customer = 'CUSTOMER',
+}
 
 export interface PropertyConfiguration {
-	id: string
+	propertyConfigurationID: string
+	creationDate: number
+	source: PropertyConfigurationSource
 	name: string
 	propertyType: PropertyType
-	propertyOptions: string[]
+	isRequired: boolean
 	defaultValue?: string
-	createdAt: string
+	enumOptions?: string[]
+}
+
+export interface EnumConfiguration {
+	options: string[]
+	defaultValue?: string
+}
+
+export interface PropertyConfigurationResponse {
+	data: PropertyConfiguration[]
 }

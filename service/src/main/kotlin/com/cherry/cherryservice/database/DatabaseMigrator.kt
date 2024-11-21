@@ -1,6 +1,7 @@
 package com.cherry.cherryservice.database
 
-import com.cherry.cherryservice.models.PropertyConfiguration
+import com.cherry.cherryservice.dto.PropertyConfigurationSource
+import com.cherry.cherryservice.dto.PropertyConfigurationType
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.queryForObject
 
@@ -43,23 +44,38 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
                 SchemaVersion.VERSION_ZERO -> {
                     jdbcTemplate.execute("""
                         CREATE TABLE property_configurations (
-                            id SERIAL PRIMARY KEY,
+                            id BIGINT GENERATED ALWAYS AS IDENTITY,
+                            external_id UUID DEFAULT gen_random_uuid(),
+                            creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            modify_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            source TEXT NOT NULL,
                             name TEXT NOT NULL,
                             property_type TEXT NOT NULL,
-                            property_options TEXT[] NOT NULL,
-                            default_value TEXT
+                            is_required BOOLEAN NOT NULL,
+                            default_value TEXT,
+                            enum_options TEXT[]
                         );
                     """.trimIndent())
 
-                    jdbcTemplate.update("INSERT INTO property_configurations (name, property_type, property_options, default_value) VALUES (?, ?, ?, ?);", "Description", PropertyConfiguration.Type.TEXT.value, emptyArray<String>(), null)
+                    jdbcTemplate.update("INSERT INTO property_configurations (source, name, property_type, is_required) VALUES (?, ?, ?, ?);", PropertyConfigurationSource.SYSTEM.toString(), "Description", PropertyConfigurationType.TEXT.toString(), true)
 
                     val criticalText = "Critical"
-                    val priorityOptions = arrayOf(criticalText, "High", "Medium", "Low")
-                    jdbcTemplate.update("INSERT INTO property_configurations (name, property_type, property_options, default_value) VALUES (?, ?, ?, ?);", "Priority", PropertyConfiguration.Type.ENUM.value, priorityOptions, criticalText)
+                    jdbcTemplate.update("INSERT INTO property_configurations (source, name, property_type, is_required, default_value, enum_options) VALUES (?, ?, ?, ?, ?, ?);",
+                        PropertyConfigurationSource.SYSTEM.toString(),
+                        "Priority",
+                        PropertyConfigurationType.ENUM.toString(),
+                        true,
+                        criticalText,
+                        arrayOf(criticalText, "High", "Medium", "Low"))
 
                     val otherText = "Other"
-                    val testTypeOptions = arrayOf(otherText, "Functional", "Smoke", "Exploratory")
-                    jdbcTemplate.update("INSERT INTO property_configurations (name, property_type, property_options, default_value) VALUES (?, ?, ?, ?);", "Type", PropertyConfiguration.Type.ENUM.value, testTypeOptions, otherText)
+                    jdbcTemplate.update("INSERT INTO property_configurations (source, name, property_type, is_required, default_value, enum_options) VALUES (?, ?, ?, ?, ?, ?);",
+                        PropertyConfigurationSource.SYSTEM.toString(),
+                        "Type",
+                        PropertyConfigurationType.ENUM.toString(),
+                        true,
+                        otherText,
+                        arrayOf(otherText, "Functional", "Smoke", "Exploratory"))
 
                     // finish migration
                     jdbcTemplate.execute("CREATE TABLE schema_version (version TEXT NOT NULL, creation_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP);")

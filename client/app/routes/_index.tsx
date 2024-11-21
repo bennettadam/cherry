@@ -3,7 +3,6 @@ import { useLoaderData, useSubmit, Link } from '@remix-run/react'
 import { useState } from 'react'
 import ProjectModal from '~/components/ProjectModal'
 import type { Project } from '~/models/types'
-import { projectStore } from '~/models/project.server'
 
 export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData()
@@ -17,12 +16,11 @@ export async function action({ request }: ActionFunctionArgs) {
 		createdAt: new Date().toISOString(),
 	}
 
-	projectStore.addProject(newProject)
 	return Response.json({ success: true })
 }
 
 export async function loader() {
-	return { projects: projectStore.getProjects() }
+	return { projects: [] }
 }
 
 export default function Projects() {

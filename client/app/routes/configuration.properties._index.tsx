@@ -1,15 +1,36 @@
 import { type LoaderFunctionArgs } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
-import { projectStore } from '~/models/project.server'
 import { Link } from '@remix-run/react'
+import {
+	PropertyConfiguration,
+	PropertyConfigurationResponse,
+} from '../models/types'
+import { APIRoute } from '../utility/Routes'
 
 export async function loader({}: LoaderFunctionArgs) {
-	const properties = projectStore.getPropertyConfigurations()
-	return { properties }
+	const response = await fetch(APIRoute.properties, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	})
+
+	if (!response.ok) {
+		throw new Error('Failed to fetch properties')
+	}
+
+	return (await response.json()) as PropertyConfigurationResponse
 }
 
 export default function ConfigurationProperties() {
-	const { properties } = useLoaderData<typeof loader>()
+	const { data } = useLoaderData<typeof loader>()
+
+	function renderEnumOptions(propertyConfiguration: PropertyConfiguration) {
+		const options = propertyConfiguration.enumOptions ?? []
+		return options.length > 0
+			? propertyConfiguration.enumOptions?.join(', ')
+			: '-'
+	}
 
 	return (
 		<div className="p-6">
@@ -57,8 +78,8 @@ export default function ConfigurationProperties() {
 						</tr>
 					</thead>
 					<tbody className="divide-y divide-gray-200 bg-white">
-						{properties.map((property) => (
-							<tr key={property.id}>
+						{data.map((property) => (
+							<tr key={property.propertyConfigurationID}>
 								<td className="whitespace-nowrap px-6 py-4">
 									<div className="text-sm font-medium text-gray-900">
 										{property.name}
@@ -76,14 +97,12 @@ export default function ConfigurationProperties() {
 								</td>
 								<td className="px-6 py-4">
 									<div className="text-sm text-gray-500">
-										{property.propertyOptions.length > 0
-											? property.propertyOptions.join(', ')
-											: '-'}
+										{renderEnumOptions(property)}
 									</div>
 								</td>
 								<td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
 									<Link
-										to={`${property.id}/edit`}
+										to={`${property.propertyConfigurationID}/edit`}
 										className="text-indigo-600 hover:text-indigo-900"
 									>
 										Edit
