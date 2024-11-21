@@ -4,20 +4,20 @@ import {
 	redirect,
 } from '@remix-run/node'
 import { Form, Link, useLoaderData } from '@remix-run/react'
-import { projectStore } from '~/models/project.server'
 import { Route } from '../utility/Routes'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	const projectID = params.projectID!
 	const testCaseID = params.testCaseID!
-	const testCases = projectStore.getTestCases(projectID)
-	const testCase = testCases.find((test) => test.testCaseID === testCaseID)
 
-	if (!testCase) {
-		throw new Response('Test case not found', { status: 404 })
+	return {
+		testCase: {
+			title: 'sup',
+			priority: 'ay',
+			createdAt: 12345,
+			description: 'test',
+		},
 	}
-
-	return { testCase }
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -30,8 +30,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		description: formData.get('description') as string,
 		priority: formData.get('priority') as string,
 	}
-
-	await projectStore.updateTestCase(projectID, testCaseID, updates)
 
 	return redirect(Route.viewTestCase(projectID, testCaseID))
 }

@@ -16,7 +16,7 @@ export default function ProjectIndex() {
 				<h1 className="text-2xl font-semibold text-gray-900">Overview</h1>
 				<p className="mt-2 text-gray-600">
 					Project created on{' '}
-					{new Date(project.createdAt).toLocaleDateString()}
+					{new Date(project.creationDate).toLocaleDateString()}
 				</p>
 			</div>
 			<div className="grid grid-cols-2 gap-6">

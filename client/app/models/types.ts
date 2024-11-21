@@ -1,10 +1,3 @@
-export interface Project {
-	projectID: string
-	name: string
-	description: string
-	createdAt: string
-}
-
 export interface TestCase {
 	testCaseID: string
 	projectID: string
@@ -53,4 +46,8 @@ export interface EnumConfiguration {
 
 export interface PropertyConfigurationResponse {
 	data: PropertyConfiguration[]
+}
+
+export interface FetchResponse<T> {
+	data: T[]
 }

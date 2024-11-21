@@ -1,42 +1,59 @@
 import { json, type ActionFunctionArgs } from '@remix-run/node'
-import { useLoaderData, useSubmit, Link } from '@remix-run/react'
+import { useLoaderData, useSubmit, Link, useFetcher } from '@remix-run/react'
 import { useState } from 'react'
 import ProjectModal from '~/components/ProjectModal'
-import type { Project } from '~/models/types'
+import type { FetchResponse } from '~/models/types'
+import { APIRoute } from '../utility/Routes'
+import { NewProject, Project } from '../models/project'
 
 export async function action({ request }: ActionFunctionArgs) {
-	const formData = await request.formData()
-	const name = formData.get('name') as string
-	const description = formData.get('description') as string
+	try {
+		const response = await fetch(APIRoute.projects, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: await request.text(),
+		})
 
-	const newProject: Project = {
-		projectID: crypto.randomUUID(),
-		name,
-		description,
-		createdAt: new Date().toISOString(),
+		if (!response.ok) {
+			throw new Error('Failed to create property')
+		}
+
+		return Response.json({ success: true })
+	} catch (error) {
+		return Response.json(
+			{ error: 'Failed to create property' },
+			{ status: 400 }
+		)
 	}
-
-	return Response.json({ success: true })
 }
 
 export async function loader() {
-	return { projects: [] }
+	const response = await fetch(APIRoute.projects, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	})
+
+	if (!response.ok) {
+		throw new Response('Failed to fetch properties', { status: 500 })
+	}
+
+	return (await response.json()) as FetchResponse<Project>
 }
 
 export default function Projects() {
 	const [isModalOpen, setIsModalOpen] = useState(false)
-	const { projects } = useLoaderData<typeof loader>()
-	const submit = useSubmit()
+	const { data } = useLoaderData<typeof loader>()
+	const fetcher = useFetcher()
 
-	const handleCreateProject = (data: {
-		name: string
-		description: string
-	}) => {
-		const formData = new FormData()
-		formData.append('name', data.name)
-		formData.append('description', data.description)
-
-		submit(formData, { method: 'POST' })
+	const handleCreateProject = (newProject: NewProject) => {
+		fetcher.submit(newProject, {
+			method: 'POST',
+			encType: 'application/json',
+		})
 		setIsModalOpen(false)
 	}
 
@@ -55,13 +72,13 @@ export default function Projects() {
 					</button>
 				</div>
 				<div className="rounded-lg border border-gray-200">
-					{projects.length === 0 ? (
+					{data.length === 0 ? (
 						<div className="p-4 text-sm text-gray-500">
 							No projects created yet.
 						</div>
 					) : (
 						<ul className="divide-y divide-gray-200">
-							{projects.map((project) => (
+							{data.map((project) => (
 								<li key={project.projectID}>
 									<Link
 										to={`${project.projectID}`}
@@ -69,16 +86,21 @@ export default function Projects() {
 									>
 										<div className="flex justify-between">
 											<div>
-												<h3 className="text-sm font-medium text-gray-900">
-													{project.name}
-												</h3>
+												<div className="flex items-center gap-2">
+													<h3 className="text-sm font-medium text-gray-900">
+														{project.name}
+													</h3>
+													<span className="text-xs text-gray-500">
+														{project.projectShortCode}
+													</span>
+												</div>
 												<p className="mt-1 text-sm text-gray-500 line-clamp-2">
 													{project.description}
 												</p>
 											</div>
 											<div className="text-xs text-gray-500">
 												{new Date(
-													project.createdAt
+													project.creationDate
 												).toLocaleDateString()}
 											</div>
 										</div>

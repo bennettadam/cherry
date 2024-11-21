@@ -42,6 +42,20 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
             println("Migrating $schemaVersion")
             when (schemaVersion) {
                 SchemaVersion.VERSION_ZERO -> {
+                    // projects
+                    jdbcTemplate.execute("""
+                        CREATE TABLE workspace_projects (
+                            id BIGINT GENERATED ALWAYS AS IDENTITY,
+                            external_id UUID DEFAULT gen_random_uuid(),
+                            creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            modify_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            name TEXT NOT NULL,
+                            project_short_code TEXT NOT NULL,
+                            description TEXT
+                        )
+                    """.trimIndent())
+
+                    // property configurations
                     jdbcTemplate.execute("""
                         CREATE TABLE property_configurations (
                             id BIGINT GENERATED ALWAYS AS IDENTITY,

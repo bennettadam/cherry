@@ -1,18 +1,18 @@
 import { type LoaderFunctionArgs } from '@remix-run/node'
 import { useLoaderData, Link } from '@remix-run/react'
-import { projectStore } from '~/models/project.server'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	const projectID = params.projectID!
 	const testCaseID = params.testCaseID!
-	const testCases = projectStore.getTestCases(projectID)
-	const testCase = testCases.find((test) => test.testCaseID === testCaseID)
 
-	if (!testCase) {
-		throw new Response('Test case not found', { status: 404 })
+	return {
+		testCase: {
+			title: 'sup',
+			priority: 'ay',
+			createdAt: 12345,
+			description: 'test',
+		},
 	}
-
-	return { testCase }
 }
 
 export default function TestCaseDetails() {

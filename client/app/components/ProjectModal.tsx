@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react'
+import { useFetcher } from '@remix-run/react'
+import { NewProject } from '../models/project'
 
 interface ProjectModalProps {
 	isOpen: boolean
 	onClose: () => void
-	onSubmit: (data: { name: string; description: string }) => void
+	onSubmit: (newProject: NewProject) => void
 }
 
 export default function ProjectModal({
@@ -12,6 +14,7 @@ export default function ProjectModal({
 	onSubmit,
 }: ProjectModalProps) {
 	const dialogRef = useRef<HTMLDialogElement>(null)
+	const fetcher = useFetcher()
 
 	useEffect(() => {
 		const dialog = dialogRef.current
@@ -23,15 +26,6 @@ export default function ProjectModal({
 			dialog.close()
 		}
 	}, [isOpen])
-
-	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault()
-		const formData = new FormData(e.currentTarget)
-		onSubmit({
-			name: formData.get('name') as string,
-			description: formData.get('description') as string,
-		})
-	}
 
 	return (
 		<dialog
@@ -48,7 +42,21 @@ export default function ProjectModal({
 				<h2 className="text-lg font-medium text-gray-900">
 					Create New Project
 				</h2>
-				<form onSubmit={handleSubmit} className="mt-4">
+				<fetcher.Form
+					method="post"
+					className="mt-4"
+					onSubmit={(event) => {
+						event.preventDefault()
+						const formData = new FormData(event.currentTarget)
+						onSubmit({
+							name: formData.get('name') as string,
+							projectShortCode: formData.get('shortCode') as string,
+							description: formData.get('description') as
+								| string
+								| undefined,
+						})
+					}}
+				>
 					<div className="space-y-4">
 						<div>
 							<label
@@ -61,6 +69,21 @@ export default function ProjectModal({
 								type="text"
 								name="name"
 								id="name"
+								required
+								className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+							/>
+						</div>
+						<div>
+							<label
+								htmlFor="shortCode"
+								className="block text-sm font-medium text-gray-700"
+							>
+								Project Short Code
+							</label>
+							<input
+								type="text"
+								name="shortCode"
+								id="shortCode"
 								required
 								className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
 							/>
@@ -95,7 +118,7 @@ export default function ProjectModal({
 							Create
 						</button>
 					</div>
-				</form>
+				</fetcher.Form>
 			</div>
 		</dialog>
 	)

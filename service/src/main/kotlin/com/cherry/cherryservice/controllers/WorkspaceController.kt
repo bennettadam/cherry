@@ -4,6 +4,7 @@ import com.cherry.cherryservice.dto.CreatePropertyConfigurationDTO
 import com.cherry.cherryservice.dto.FetchResponse
 import com.cherry.cherryservice.dto.PropertyConfigurationDTO
 import com.cherry.cherryservice.dto.UpdatePropertyConfigurationDTO
+import com.cherry.cherryservice.dto.projects.CreateWorkspaceProjectDTO
 import com.cherry.cherryservice.services.WorkspaceService
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.springframework.http.ResponseEntity
@@ -19,6 +20,19 @@ import org.springframework.web.bind.annotation.RestController
 class WorkspaceController(
     private val workspaceService: WorkspaceService
 ) {
+
+    @GetMapping("/projects")
+    fun retrieveProjects(): ResponseEntity<Any> {
+        val projects = workspaceService.retrieveProjects()
+        return ResponseEntity.ok(FetchResponse(projects))
+    }
+
+    @PostMapping("/projects")
+    fun createProject(@RequestBody request: CreateWorkspaceProjectDTO): ResponseEntity<Any> {
+        workspaceService.createProject(request)
+        return ResponseEntity.ok("Success")
+    }
+
     @GetMapping("/properties")
     fun getWorkspaceProperties(): ResponseEntity<FetchResponse<Any>> {
         val properties = workspaceService.retrieveProperties()

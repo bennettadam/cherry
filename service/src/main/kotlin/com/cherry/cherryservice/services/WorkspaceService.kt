@@ -1,17 +1,35 @@
 package com.cherry.cherryservice.services
 
 import com.cherry.cherryservice.dto.*
+import com.cherry.cherryservice.dto.projects.CreateWorkspaceProjectDTO
+import com.cherry.cherryservice.dto.projects.WorkspaceProjectDTO
 import com.cherry.cherryservice.models.PropertyConfiguration
+import com.cherry.cherryservice.models.WorkspaceProject
 import com.cherry.cherryservice.repositories.PropertyConfigurationRepository
+import com.cherry.cherryservice.repositories.WorkspaceProjectRepository
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.stereotype.Service
 
 @Service
 class WorkspaceService(
+    val projectRepository: WorkspaceProjectRepository,
     val propertyConfigurationRepository: PropertyConfigurationRepository,
 ) {
     private val log: Log = LogFactory.getLog(javaClass)
+
+    fun retrieveProjects(): List<WorkspaceProjectDTO> {
+        val projects = projectRepository.findAll()
+        return projects.map { it.toDTO() }
+    }
+
+    fun createProject(project: CreateWorkspaceProjectDTO) {
+        val newProjectModel = WorkspaceProject(
+            name = project.name,
+            projectShortCode = project.projectShortCode,
+            description = project.description)
+        projectRepository.save(newProjectModel)
+    }
 
     fun retrieveProperties(): List<PropertyConfigurationDTO> {
         val properties = propertyConfigurationRepository.findAll()
