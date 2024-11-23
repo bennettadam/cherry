@@ -1,20 +1,11 @@
 export interface TestCase {
 	testCaseID: string
 	projectID: string
+	creationDate: number
+	testCaseNumber: number
 	title: string
-	description: string
-	priority: 'critical' | 'high' | 'medium' | 'low'
-	type:
-		| 'other'
-		| 'functional'
-		| 'smoke'
-		| 'regression'
-		| 'security'
-		| 'acceptance'
-		| 'compatibility'
-		| 'exploratory'
-	steps: string
-	createdAt: string
+	description?: string
+	testInstructions?: string
 }
 
 export enum PropertyType {

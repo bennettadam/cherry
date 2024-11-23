@@ -1,26 +1,33 @@
 import { type LoaderFunctionArgs } from '@remix-run/node'
 import { useRouteLoaderData, useLoaderData, Link } from '@remix-run/react'
 import type { loader as projectLoader } from './$projectID'
-import { Route } from '../utility/Routes'
+import { APIRoute, Route } from '../utility/Routes'
+import { FetchResponse, TestCase } from '../models/types'
 
 export async function loader({ params }: LoaderFunctionArgs) {
-	const projectID = params.projectID!
-	return { testCases: [] } as {
-		testCases: {
-			testCaseID: string
-			projectID: string
-			title: string
-			priority: string
-			createdAt: number
-			description: string
-		}[]
+	const projectID = params.projectID
+	if (!projectID) {
+		throw new Response('Project ID is required', { status: 400 })
 	}
+
+	const response = await fetch(APIRoute.testCases(projectID), {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	})
+
+	if (!response.ok) {
+		throw new Response('Failed to fetch test cases', { status: 500 })
+	}
+
+	return (await response.json()) as FetchResponse<TestCase>
 }
 
 export default function TestCases() {
 	const routeData =
 		useRouteLoaderData<typeof projectLoader>('routes/$projectID')
-	const { testCases } = useLoaderData<typeof loader>()
+	const { data } = useLoaderData<typeof loader>()
 
 	if (!routeData?.project) {
 		return <p>No project found</p>
@@ -38,13 +45,13 @@ export default function TestCases() {
 				</Link>
 			</div>
 			<div className="rounded-lg border border-gray-200">
-				{testCases.length === 0 ? (
+				{data.length === 0 ? (
 					<div className="p-4 text-sm text-gray-500">
 						No test cases created yet.
 					</div>
 				) : (
 					<ul className="divide-y divide-gray-200">
-						{testCases.map((testCase) => (
+						{data.map((testCase) => (
 							<li key={testCase.testCaseID}>
 								<Link
 									to={Route.viewTestCase(
@@ -62,7 +69,7 @@ export default function TestCases() {
 												{testCase.description}
 											</p>
 										</div>
-										<div className="flex items-center space-x-4">
+										{/* <div className="flex items-center space-x-4">
 											<span className="text-xs font-medium text-gray-500">
 												{testCase.priority.toUpperCase()}
 											</span>
@@ -71,7 +78,7 @@ export default function TestCases() {
 													testCase.createdAt
 												).toLocaleDateString()}
 											</span>
-										</div>
+										</div> */}
 									</div>
 								</Link>
 							</li>

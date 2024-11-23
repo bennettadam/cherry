@@ -45,7 +45,7 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
                     // projects
                     jdbcTemplate.execute("""
                         CREATE TABLE workspace_projects (
-                            id BIGINT GENERATED ALWAYS AS IDENTITY,
+                            id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
                             external_id UUID DEFAULT gen_random_uuid(),
                             creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             modify_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -55,10 +55,25 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
                         )
                     """.trimIndent())
 
+                    // test cases
+                    jdbcTemplate.execute("""
+                        CREATE TABLE test_cases (
+                            id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                            external_id UUID DEFAULT gen_random_uuid(),
+                            project_id BIGINT REFERENCES workspace_projects(id),
+                            creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            modify_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            test_case_number BIGINT NOT NULL,
+                            title TEXT NOT NULL,
+                            description TEXT,
+                            test_instructions TEXT
+                        )
+                    """.trimIndent())
+
                     // property configurations
                     jdbcTemplate.execute("""
                         CREATE TABLE property_configurations (
-                            id BIGINT GENERATED ALWAYS AS IDENTITY,
+                            id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
                             external_id UUID DEFAULT gen_random_uuid(),
                             creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             modify_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

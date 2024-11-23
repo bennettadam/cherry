@@ -5,15 +5,18 @@ import com.cherry.cherryservice.dto.FetchResponse
 import com.cherry.cherryservice.dto.PropertyConfigurationDTO
 import com.cherry.cherryservice.dto.UpdatePropertyConfigurationDTO
 import com.cherry.cherryservice.dto.projects.CreateWorkspaceProjectDTO
+import com.cherry.cherryservice.dto.testcases.CreateTestCaseDTO
 import com.cherry.cherryservice.services.WorkspaceService
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/v1/workspace")
@@ -30,6 +33,18 @@ class WorkspaceController(
     @PostMapping("/projects")
     fun createProject(@RequestBody request: CreateWorkspaceProjectDTO): ResponseEntity<Any> {
         workspaceService.createProject(request)
+        return ResponseEntity.ok("Success")
+    }
+
+    @GetMapping("/projects/{projectID}/test-cases")
+    fun retrieveTestCases(@PathVariable projectID: UUID): ResponseEntity<Any> {
+        val testCases = workspaceService.retrieveTestCases(projectID)
+        return ResponseEntity.ok(FetchResponse(testCases))
+    }
+
+    @PostMapping("/projects/{projectID}/test-cases")
+    fun createTestCase(@PathVariable projectID: UUID, @RequestBody request: CreateTestCaseDTO): ResponseEntity<Any> {
+        workspaceService.createTestCase(projectID, request)
         return ResponseEntity.ok("Success")
     }
 

@@ -17,6 +17,10 @@ export class APIRoute {
 		return 'http://localhost:8080/api/v1/workspace/projects'
 	}
 
+	static testCases(projectID: string) {
+		return `http://localhost:8080/api/v1/workspace/projects/${projectID}/test-cases`
+	}
+
 	static get properties() {
 		return 'http://localhost:8080/api/v1/workspace/properties'
 	}
