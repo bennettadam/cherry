@@ -46,6 +46,15 @@ class WorkspaceService(
         return testCases.map { it.toDTO() }
     }
 
+    fun updateTestCase(updateDTO: UpdateDTO<CreateTestCaseDTO>) {
+        val testCase = testCaseRepository.findByExternalID(updateDTO.id)
+        requireNotNull(testCase) { "No test case found" }
+        testCase.title = updateDTO.data.title
+        testCase.description = updateDTO.data.description
+        testCase.testInstructions = updateDTO.data.testInstructions
+        testCaseRepository.save(testCase)
+    }
+
     fun createTestCase(projectID: UUID, testCase: CreateTestCaseDTO) {
         val project = projectRepository.findByExternalID(projectID)
         requireNotNull(project) { "No project found" }

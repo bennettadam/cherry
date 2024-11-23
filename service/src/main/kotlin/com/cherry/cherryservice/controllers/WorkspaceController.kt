@@ -1,11 +1,9 @@
 package com.cherry.cherryservice.controllers
 
-import com.cherry.cherryservice.dto.CreatePropertyConfigurationDTO
-import com.cherry.cherryservice.dto.FetchResponse
-import com.cherry.cherryservice.dto.PropertyConfigurationDTO
-import com.cherry.cherryservice.dto.UpdatePropertyConfigurationDTO
+import com.cherry.cherryservice.dto.*
 import com.cherry.cherryservice.dto.projects.CreateWorkspaceProjectDTO
 import com.cherry.cherryservice.dto.testcases.CreateTestCaseDTO
+import com.cherry.cherryservice.dto.testcases.TestCaseDTO
 import com.cherry.cherryservice.services.WorkspaceService
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.springframework.http.ResponseEntity
@@ -40,6 +38,12 @@ class WorkspaceController(
     fun retrieveTestCases(@PathVariable projectID: UUID): ResponseEntity<Any> {
         val testCases = workspaceService.retrieveTestCases(projectID)
         return ResponseEntity.ok(FetchResponse(testCases))
+    }
+
+    @PutMapping("/projects/{projectID}/test-cases")
+    fun updateTestCase(@PathVariable projectID: UUID, @RequestBody request: UpdateDTO<CreateTestCaseDTO>): ResponseEntity<Any> {
+        workspaceService.updateTestCase(request)
+        return ResponseEntity.ok("Success")
     }
 
     @PostMapping("/projects/{projectID}/test-cases")
