@@ -42,25 +42,47 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		throw new Response('Property ID is required', { status: 400 })
 	}
 
-	try {
-		const response = await fetch(APIRoute.properties, {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: await request.text(),
-		})
+	if (request.method === 'DELETE') {
+		try {
+			const response = await fetch(APIRoute.property(propertyID), {
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			})
 
-		if (!response.ok) {
-			throw new Error('Failed to create property')
+			if (!response.ok) {
+				throw new Error('Failed to delete property')
+			}
+
+			return redirect(Route.viewProperties)
+		} catch (error) {
+			return Response.json(
+				{ error: 'Failed to delete property' },
+				{ status: 400 }
+			)
 		}
+	} else {
+		try {
+			const response = await fetch(APIRoute.properties, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: await request.text(),
+			})
 
-		return redirect(Route.viewProperties)
-	} catch (error) {
-		return Response.json(
-			{ error: 'Failed to create property' },
-			{ status: 400 }
-		)
+			if (!response.ok) {
+				throw new Error('Failed to create property')
+			}
+
+			return redirect(Route.viewProperties)
+		} catch (error) {
+			return Response.json(
+				{ error: 'Failed to edit property' },
+				{ status: 400 }
+			)
+		}
 	}
 }
 
@@ -68,6 +90,12 @@ export default function EditProperty() {
 	const { property } = useLoaderData<typeof loader>()
 	const actionData = useActionData<typeof action>()
 	const submit = useSubmit()
+
+	const handleDelete = () => {
+		if (window.confirm('Are you sure you want to delete this property?')) {
+			submit(null, { method: 'delete' })
+		}
+	}
 
 	const handleSubmit = (data: PropertyFormData) => {
 		const updateData = {
@@ -96,6 +124,8 @@ export default function EditProperty() {
 				onSubmit={handleSubmit}
 				error={actionData?.error}
 				submitLabel="Save Changes"
+				allowTypeEdit={false}
+				onDelete={handleDelete}
 			/>
 		</div>
 	)

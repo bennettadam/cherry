@@ -4,12 +4,27 @@ import {
 	Link,
 	useRouteLoaderData,
 	useParams,
+	useMatches,
 } from '@remix-run/react'
-import { loader as testLoader } from '~/routes/$projectID.tests._index'
 import { APIRoute } from '../utility/Routes'
-import { FetchResponse, TestCase } from '../models/types'
+import { FetchResponse, PropertyConfiguration, TestCase } from '../models/types'
 
 export async function loader({ params }: LoaderFunctionArgs) {
+	const propertiesResponse = await fetch(APIRoute.properties, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	})
+
+	if (!propertiesResponse.ok) {
+		throw new Error('Failed to fetch properties')
+	}
+
+	const properties = (await propertiesResponse.json()) as FetchResponse<
+		PropertyConfiguration[]
+	>
+
 	const projectID = params.projectID
 	if (!projectID) {
 		throw new Response('Project ID is required', { status: 400 })
@@ -30,7 +45,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 		throw new Response('Failed to fetch test cases', { status: 500 })
 	}
 
-	const testCases = (await response.json()) as FetchResponse<TestCase>
+	const testCases = (await response.json()) as FetchResponse<TestCase[]>
 	const testCase = testCases.data.find(
 		(testCase) => testCase.testCaseID === testCaseID
 	)
@@ -39,11 +54,20 @@ export async function loader({ params }: LoaderFunctionArgs) {
 		throw new Response('Test case not found', { status: 404 })
 	}
 
-	return { testCase }
+	return { testCase, properties: properties.data }
 }
 
 export default function TestCaseDetails() {
-	const { testCase } = useLoaderData<typeof loader>()
+	const { testCaseID } = useParams()
+	if (!testCaseID) {
+		return <p>No test case ID found in route</p>
+	}
+
+	const testCaseData = useLoaderData<typeof loader>()
+	if (!testCaseData) {
+		return <p>Missing test case data from route loader</p>
+	}
+	const { testCase, properties } = testCaseData
 
 	return (
 		<div className="p-6">
@@ -96,6 +120,30 @@ export default function TestCaseDetails() {
 						</p>
 					</div>
 				)}
+
+				<div className="rounded-lg">
+					<h3 className="text-lg font-medium text-gray-900">Properties</h3>
+					<div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+						{properties.map((property) => (
+							<div
+								key={property.propertyConfigurationID}
+								className="rounded-md border border-gray-200 p-3"
+							>
+								<div className="font-medium text-gray-900">
+									{property.name}
+								</div>
+								<div className="mt-1 text-sm text-gray-500">
+									Type: {property.propertyType}
+								</div>
+								{/* {property. && (
+									<div className="mt-2 text-sm text-gray-700">
+										{property.description}
+									</div>
+								)} */}
+							</div>
+						))}
+					</div>
+				</div>
 			</div>
 		</div>
 	)

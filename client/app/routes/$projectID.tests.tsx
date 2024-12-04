@@ -2,9 +2,24 @@ import { type LoaderFunctionArgs } from '@remix-run/node'
 import { useRouteLoaderData, useLoaderData, Link } from '@remix-run/react'
 import type { loader as projectLoader } from './$projectID'
 import { APIRoute, Route } from '../utility/Routes'
-import { FetchResponse, TestCase } from '../models/types'
+import { FetchResponse, PropertyConfiguration, TestCase } from '../models/types'
 
 export async function loader({ params }: LoaderFunctionArgs) {
+	const propertiesResponse = await fetch(APIRoute.properties, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	})
+
+	if (!propertiesResponse.ok) {
+		throw new Error('Failed to fetch properties')
+	}
+
+	const properties = (await propertiesResponse.json()) as FetchResponse<
+		PropertyConfiguration[]
+	>
+
 	const projectID = params.projectID
 	if (!projectID) {
 		throw new Response('Project ID is required', { status: 400 })
@@ -21,13 +36,15 @@ export async function loader({ params }: LoaderFunctionArgs) {
 		throw new Response('Failed to fetch test cases', { status: 500 })
 	}
 
-	return (await response.json()) as FetchResponse<TestCase>
+	const testCases = (await response.json()) as FetchResponse<TestCase[]>
+
+	return { testCases: testCases.data, properties: properties.data }
 }
 
 export default function TestCases() {
 	const routeData =
 		useRouteLoaderData<typeof projectLoader>('routes/$projectID')
-	const { data } = useLoaderData<typeof loader>()
+	const { testCases, properties } = useLoaderData<typeof loader>()
 
 	if (!routeData?.project) {
 		return <p>No project found</p>
@@ -45,13 +62,13 @@ export default function TestCases() {
 				</Link>
 			</div>
 			<div className="rounded-lg border border-gray-200">
-				{data.length === 0 ? (
+				{testCases.length === 0 ? (
 					<div className="p-4 text-sm text-gray-500">
 						No test cases created yet.
 					</div>
 				) : (
 					<ul className="divide-y divide-gray-200">
-						{data.map((testCase) => (
+						{testCases.map((testCase) => (
 							<li key={testCase.testCaseID}>
 								<Link
 									to={Route.viewTestCase(

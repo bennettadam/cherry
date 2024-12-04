@@ -6,4 +6,5 @@ import java.util.UUID
 
 interface PropertyConfigurationRepository : JpaRepository<PropertyConfiguration, Long> {
     fun findByExternalID(externalID: UUID): PropertyConfiguration?
+    fun deleteByExternalID(externalID: UUID)
 }

@@ -2,6 +2,7 @@ package com.cherry.cherryservice.models
 
 import com.cherry.cherryservice.dto.projects.WorkspaceProjectDTO
 import com.cherry.cherryservice.dto.testcases.TestCaseDTO
+import com.cherry.cherryservice.dto.testcases.TestCasePropertyValueDTO
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
@@ -16,10 +17,6 @@ class TestCase(
     @Column(name = "external_id")
     val externalID: UUID = UUID.randomUUID(),
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id")
-    val project: WorkspaceProject,
-
     @Column(name = "creation_date")
     @CreationTimestamp
     val creationDate: Date = Date(),
@@ -27,6 +24,10 @@ class TestCase(
     @Column(name = "modify_date")
     @UpdateTimestamp
     val modifyDate: Date = Date(),
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id")
+    val project: WorkspaceProject,
 
     @Column(name = "test_case_number")
     val testCaseNumber: Long,
@@ -38,10 +39,14 @@ class TestCase(
     var description: String?,
 
     @Column(name = "test_instructions")
-    var testInstructions: String?
+    var testInstructions: String?,
+
+    @OneToMany(mappedBy = "testCase")
+    val propertyValues: List<TestCasePropertyValue> = emptyList(),
 ) {
 
     fun toDTO(): TestCaseDTO {
-        return TestCaseDTO(externalID, project.externalID, creationDate, testCaseNumber, title, description, testInstructions)
+        val propertyValueDTOs = propertyValues.map { it.toDTO() }
+        return TestCaseDTO(externalID, creationDate, project.externalID, testCaseNumber, title, description, testInstructions, propertyValueDTOs)
     }
 }

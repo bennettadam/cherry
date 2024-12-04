@@ -40,5 +40,5 @@ export interface PropertyConfigurationResponse {
 }
 
 export interface FetchResponse<T> {
-	data: T[]
+	data: T
 }

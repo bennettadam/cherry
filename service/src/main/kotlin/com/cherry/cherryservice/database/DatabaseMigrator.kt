@@ -60,9 +60,9 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
                         CREATE TABLE test_cases (
                             id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
                             external_id UUID DEFAULT gen_random_uuid(),
-                            project_id BIGINT REFERENCES workspace_projects(id),
                             creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             modify_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            project_id BIGINT REFERENCES workspace_projects(id),
                             test_case_number BIGINT NOT NULL,
                             title TEXT NOT NULL,
                             description TEXT,
@@ -84,6 +84,19 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
                             default_value TEXT,
                             enum_options TEXT[]
                         );
+                    """.trimIndent())
+
+                    // test case property values
+                    jdbcTemplate.execute("""
+                        CREATE TABLE test_case_property_values (
+                            id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                            external_id UUID DEFAULT gen_random_uuid(),
+                            creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            modify_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            test_case_id BIGINT REFERENCES test_cases(id),
+                            property_configuration_id BIGINT REFERENCES property_configurations(id),
+                            value TEXT
+                        )
                     """.trimIndent())
 
                     jdbcTemplate.update("INSERT INTO property_configurations (source, name, property_type, is_required) VALUES (?, ?, ?, ?);", PropertyConfigurationSource.SYSTEM.toString(), "Description", PropertyConfigurationType.TEXT.toString(), true)

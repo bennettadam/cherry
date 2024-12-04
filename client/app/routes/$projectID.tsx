@@ -21,7 +21,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 		throw new Response('Failed to fetch properties', { status: 500 })
 	}
 
-	const projectData = (await response.json()) as FetchResponse<Project>
+	const projectData = (await response.json()) as FetchResponse<Project[]>
 	const project = projectData.data.find(
 		(project) => project.projectID === params.projectID
 	)
