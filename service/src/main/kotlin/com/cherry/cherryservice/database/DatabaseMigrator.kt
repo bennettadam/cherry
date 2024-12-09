@@ -95,11 +95,9 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
                             modify_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             test_case_id BIGINT REFERENCES test_cases(id),
                             property_configuration_id BIGINT REFERENCES property_configurations(id),
-                            value TEXT
+                            value TEXT NOT NULL
                         )
                     """.trimIndent())
-
-                    jdbcTemplate.update("INSERT INTO property_configurations (source, name, property_type, is_required) VALUES (?, ?, ?, ?);", PropertyConfigurationSource.SYSTEM.toString(), "Description", PropertyConfigurationType.TEXT.toString(), true)
 
                     val criticalText = "Critical"
                     jdbcTemplate.update("INSERT INTO property_configurations (source, name, property_type, is_required, default_value, enum_options) VALUES (?, ?, ?, ?, ?, ?);",

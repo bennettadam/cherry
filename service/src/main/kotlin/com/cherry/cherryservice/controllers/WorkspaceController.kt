@@ -78,7 +78,7 @@ class WorkspaceController(
     }
 
     @DeleteMapping("/properties/{propertyConfigurationID}")
-    fun createProperty(@PathVariable propertyConfigurationID: UUID): ResponseEntity<Any> {
+    fun deleteProperty(@PathVariable propertyConfigurationID: UUID): ResponseEntity<Any> {
         try {
             workspaceService.deleteProperty(propertyConfigurationID)
             return ResponseEntity.ok("Success")

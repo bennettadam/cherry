@@ -114,13 +114,7 @@ export default function EditProperty() {
 			</div>
 
 			<PropertyForm
-				defaultValues={{
-					name: property.name,
-					propertyType: property.propertyType,
-					isRequired: property.isRequired,
-					enumOptions: property.enumOptions,
-					defaultValue: property.defaultValue,
-				}}
+				defaultValues={property}
 				onSubmit={handleSubmit}
 				error={actionData?.error}
 				submitLabel="Save Changes"

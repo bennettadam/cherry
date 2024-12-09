@@ -5,7 +5,6 @@ import com.cherry.cherryservice.dto.projects.CreateWorkspaceProjectDTO
 import com.cherry.cherryservice.dto.projects.WorkspaceProjectDTO
 import com.cherry.cherryservice.dto.testcases.CreateTestCaseDTO
 import com.cherry.cherryservice.dto.testcases.TestCaseDTO
-import com.cherry.cherryservice.dto.testcases.TestCasePropertyValueDTO
 import com.cherry.cherryservice.models.PropertyConfiguration
 import com.cherry.cherryservice.models.TestCase
 import com.cherry.cherryservice.models.TestCasePropertyValue
@@ -50,6 +49,7 @@ class WorkspaceService(
         return testCases.map { it.toDTO() }
     }
 
+    @Transactional
     fun updateTestCase(updateDTO: UpdateDTO<CreateTestCaseDTO>) {
         val testCase = testCaseRepository.findByExternalID(updateDTO.id)
         requireNotNull(testCase) { "No test case found" }
@@ -57,6 +57,10 @@ class WorkspaceService(
         testCase.description = updateDTO.data.description
         testCase.testInstructions = updateDTO.data.testInstructions
         testCaseRepository.save(testCase)
+
+        // wipe property values and recreate from update request
+        testCasePropertyValueRepository.deleteAll(testCase.propertyValues)
+        updateTestCasePropertyValues(testCase, updateDTO.data.propertyValues)
     }
 
     // todo: how to roll back transaction if we throw an error?
@@ -75,20 +79,22 @@ class WorkspaceService(
         )
         testCaseRepository.save(newTestCaseModel)
 
-        val testCasePropertyMap = emptyMap<UUID, TestCasePropertyValueDTO>().toMutableMap()
-        val propertyValues = testCase.propertyValues ?: emptyList()
-        for (property in propertyValues) {
-            testCasePropertyMap[property.propertyConfigurationID] = property
-        }
+        updateTestCasePropertyValues(newTestCaseModel, testCase.propertyValues)
+    }
 
+    @Transactional
+    fun updateTestCasePropertyValues(testCase: TestCase, updatedPropertyValue: Map<UUID, String>) {
         val propertyConfigurations = propertyConfigurationRepository.findAll()
         for (propertyConfigurationModel in propertyConfigurations) {
-            val propertyValue: String?
+            val propertyValue: String
 
-            val inputProperty = testCasePropertyMap[propertyConfigurationModel.externalID]
-            val inputPropertyValue = inputProperty?.value
+            val inputPropertyValue = updatedPropertyValue[propertyConfigurationModel.externalID]
             if (propertyConfigurationModel.isRequired) {
                 requireNotNull(inputPropertyValue) { "Expecting input property" }
+            }
+            else if (inputPropertyValue == null) {
+                // skip processing this if the property is not null
+                continue
             }
 
             when (propertyConfigurationModel.propertyType) {
@@ -100,19 +106,14 @@ class WorkspaceService(
                     propertyValue = inputPropertyValue
                 }
                 PropertyConfigurationType.ENUM -> {
-                    if (inputPropertyValue == null) {
-                        propertyValue = null
-                    }
-                    else {
-                        val enumOptions = propertyConfigurationModel.enumOptions ?: emptyList()
-                        require(enumOptions.contains(inputPropertyValue)) { "Unrecognized enum option" }
-                        propertyValue = inputPropertyValue
-                    }
+                    val enumOptions = propertyConfigurationModel.enumOptions ?: emptyList()
+                    require(enumOptions.contains(inputPropertyValue)) { "Unrecognized enum option" }
+                    propertyValue = inputPropertyValue
                 }
             }
 
             val newPropertyModel = TestCasePropertyValue(
-                testCase = newTestCaseModel,
+                testCase = testCase,
                 propertyConfiguration = propertyConfigurationModel,
                 value = propertyValue
             )
@@ -153,8 +154,13 @@ class WorkspaceService(
 
     @Transactional
     fun createProperty(property: CreatePropertyConfigurationDTO) {
+        println(property)
         if (property.propertyType == PropertyConfigurationType.ENUM) {
             requireNotNull(property.enumOptions) { "Missing enum configuration" }
+        }
+
+        if (property.isRequired) {
+            requireNotNull(property.defaultValue) { "Missing default value" }
         }
 
         val newModel = PropertyConfiguration(
@@ -168,14 +174,18 @@ class WorkspaceService(
 
         propertyConfigurationRepository.save(newModel)
 
-        val testCases = testCaseRepository.findAll()
-        for (testCase in testCases) {
-            val propertyValue = TestCasePropertyValue(
-                testCase = testCase,
-                propertyConfiguration = newModel,
-                value = newModel.defaultValue
-            )
-            testCasePropertyValueRepository.save(propertyValue)
+        // back-fill test cases if property value is non-null
+        val defaultValue = (property.defaultValue)
+        if (defaultValue != null) {
+            val testCases = testCaseRepository.findAll()
+            for (testCase in testCases) {
+                val propertyValue = TestCasePropertyValue(
+                    testCase = testCase,
+                    propertyConfiguration = newModel,
+                    value = defaultValue
+                )
+                testCasePropertyValueRepository.save(propertyValue)
+            }
         }
     }
 

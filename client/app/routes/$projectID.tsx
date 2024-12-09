@@ -37,7 +37,7 @@ export default function ProjectLayout() {
 	const { project } = useLoaderData<typeof loader>()
 
 	return (
-		<div className="flex h-full">
+		<div className="flex">
 			<Sidebar
 				title={project.name}
 				description={project.description}

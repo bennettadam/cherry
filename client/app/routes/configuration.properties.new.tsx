@@ -15,6 +15,8 @@ export async function action({ request }: ActionFunctionArgs) {
 		})
 
 		if (!response.ok) {
+			const error = await response.text()
+			console.error(response.status, error)
 			throw new Error('Failed to create property')
 		}
 

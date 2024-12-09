@@ -1,7 +1,6 @@
 package com.cherry.cherryservice.models
 
 import com.cherry.cherryservice.dto.testcases.TestCaseDTO
-import com.cherry.cherryservice.dto.testcases.TestCasePropertyValueDTO
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
@@ -33,9 +32,5 @@ class TestCasePropertyValue(
     val propertyConfiguration: PropertyConfiguration,
 
     @Column(name = "value")
-    val value: String?
-) {
-    fun toDTO(): TestCasePropertyValueDTO {
-        return TestCasePropertyValueDTO(propertyConfiguration.externalID, value)
-    }
-}
+    val value: String
+)

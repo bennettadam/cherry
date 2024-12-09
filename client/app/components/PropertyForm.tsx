@@ -1,6 +1,6 @@
 import { Form, Link } from '@remix-run/react'
 import { useState } from 'react'
-import { PropertyType } from '~/models/types'
+import { PropertyConfiguration, PropertyType } from '~/models/types'
 import { Route } from '~/utility/Routes'
 
 export interface PropertyFormData extends Record<string, any> {
@@ -12,7 +12,7 @@ export interface PropertyFormData extends Record<string, any> {
 }
 
 interface PropertyFormProps {
-	defaultValues?: PropertyFormData
+	defaultValues?: PropertyConfiguration
 	error?: string
 	onSubmit: (data: PropertyFormData) => void
 	submitLabel: string
@@ -103,7 +103,7 @@ export default function PropertyForm({
 						name="isRequired"
 						id="isRequired"
 						value="true"
-						defaultChecked={defaultValues?.isRequired}
+						defaultChecked={defaultValues?.required}
 						className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
 					/>
 					<label

@@ -11,5 +11,5 @@ data class TestCaseDTO(
     val title: String,
     val description: String?,
     val testInstructions: String?,
-    val propertyValues: List<TestCasePropertyValueDTO>
+    val propertyValues: Map<UUID, String>
 )

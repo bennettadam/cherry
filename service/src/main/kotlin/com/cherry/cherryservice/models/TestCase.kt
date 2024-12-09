@@ -2,7 +2,6 @@ package com.cherry.cherryservice.models
 
 import com.cherry.cherryservice.dto.projects.WorkspaceProjectDTO
 import com.cherry.cherryservice.dto.testcases.TestCaseDTO
-import com.cherry.cherryservice.dto.testcases.TestCasePropertyValueDTO
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
@@ -46,7 +45,14 @@ class TestCase(
 ) {
 
     fun toDTO(): TestCaseDTO {
-        val propertyValueDTOs = propertyValues.map { it.toDTO() }
-        return TestCaseDTO(externalID, creationDate, project.externalID, testCaseNumber, title, description, testInstructions, propertyValueDTOs)
+        val propertyValueMap = emptyMap<UUID, String>().toMutableMap()
+        for (propertyValue in propertyValues) {
+            val property = propertyValue.value
+            if (property != null) {
+                propertyValueMap[propertyValue.propertyConfiguration.externalID] = property
+            }
+        }
+
+        return TestCaseDTO(externalID, creationDate, project.externalID, testCaseNumber, title, description, testInstructions, propertyValueMap)
     }
 }

@@ -7,7 +7,13 @@ import {
 	useMatches,
 } from '@remix-run/react'
 import { APIRoute } from '../utility/Routes'
-import { FetchResponse, PropertyConfiguration, TestCase } from '../models/types'
+import {
+	FetchResponse,
+	PropertyConfiguration,
+	PropertyValue,
+	TestCase,
+} from '../models/types'
+import { Tools } from '../utility/Tools'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	const propertiesResponse = await fetch(APIRoute.properties, {
@@ -63,11 +69,12 @@ export default function TestCaseDetails() {
 		return <p>No test case ID found in route</p>
 	}
 
-	const testCaseData = useLoaderData<typeof loader>()
-	if (!testCaseData) {
-		return <p>Missing test case data from route loader</p>
-	}
-	const { testCase, properties } = testCaseData
+	const { testCase, properties } = useLoaderData<typeof loader>()
+
+	const propertyValues: PropertyValue[] = Tools.mapTestCaseProperties(
+		testCase,
+		properties
+	)
 
 	return (
 		<div className="p-6">
@@ -91,18 +98,12 @@ export default function TestCaseDetails() {
 						Created:{' '}
 						{new Date(testCase.creationDate).toLocaleDateString()}
 					</span>
-					<span className="text-sm text-gray-500">
-						ID: {testCase.testCaseID}
-					</span>
-					<span className="text-sm text-gray-500">
-						Project ID: {testCase.projectID}
-					</span>
 				</div>
 			</div>
 
 			<div className="space-y-4">
 				{testCase.description && (
-					<div className="rounded-lg border border-gray-200 p-4">
+					<div>
 						<h3 className="text-lg font-medium text-gray-900">
 							Description
 						</h3>
@@ -110,8 +111,32 @@ export default function TestCaseDetails() {
 					</div>
 				)}
 
+				<div>
+					<h3 className="text-lg font-medium text-gray-900">Properties</h3>
+					<div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+						{propertyValues.map((propertyValue) => {
+							return (
+								<div
+									key={
+										propertyValue.propertyConfiguration
+											.propertyConfigurationID
+									}
+									className="rounded-md border border-gray-200 p-3"
+								>
+									<div className="font-medium text-gray-900">
+										{propertyValue.propertyConfiguration.name}
+									</div>
+									<div className="mt-1 text-sm text-gray-500">
+										{propertyValue.value || 'Not set'}
+									</div>
+								</div>
+							)
+						})}
+					</div>
+				</div>
+
 				{testCase.testInstructions && (
-					<div className="rounded-lg border border-gray-200 p-4">
+					<div>
 						<h3 className="text-lg font-medium text-gray-900">
 							Test Instructions
 						</h3>
@@ -120,30 +145,6 @@ export default function TestCaseDetails() {
 						</p>
 					</div>
 				)}
-
-				<div className="rounded-lg">
-					<h3 className="text-lg font-medium text-gray-900">Properties</h3>
-					<div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-						{properties.map((property) => (
-							<div
-								key={property.propertyConfigurationID}
-								className="rounded-md border border-gray-200 p-3"
-							>
-								<div className="font-medium text-gray-900">
-									{property.name}
-								</div>
-								<div className="mt-1 text-sm text-gray-500">
-									Type: {property.propertyType}
-								</div>
-								{/* {property. && (
-									<div className="mt-2 text-sm text-gray-700">
-										{property.description}
-									</div>
-								)} */}
-							</div>
-						))}
-					</div>
-				</div>
 			</div>
 		</div>
 	)

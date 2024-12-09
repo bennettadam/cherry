@@ -6,6 +6,19 @@ export interface TestCase {
 	title: string
 	description?: string
 	testInstructions?: string
+	propertyValues: Record<string, string>
+}
+
+export interface CreateTestCase extends Record<string, any> {
+	title: string
+	description: string
+	testInstructions: string
+	propertyValues: Record<string, string>
+}
+
+export interface PropertyValue {
+	propertyConfiguration: PropertyConfiguration
+	value?: string
 }
 
 export enum PropertyType {
@@ -40,5 +53,10 @@ export interface PropertyConfigurationResponse {
 }
 
 export interface FetchResponse<T> {
+	data: T
+}
+
+export interface UpdateRequestBody<T> extends Record<string, any> {
+	id: string
 	data: T
 }
