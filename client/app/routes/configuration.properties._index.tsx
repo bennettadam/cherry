@@ -38,7 +38,7 @@ export default function ConfigurationProperties() {
 				<h2 className="text-2xl font-semibold text-gray-900">Properties</h2>
 				<Link
 					to="new"
-					className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+					className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
 				>
 					New Property
 				</Link>
@@ -103,7 +103,7 @@ export default function ConfigurationProperties() {
 								<td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
 									<Link
 										to={`${property.propertyConfigurationID}/edit`}
-										className="text-indigo-600 hover:text-indigo-900"
+										className="text-sky-600 hover:text-sky-900"
 									>
 										Edit
 									</Link>

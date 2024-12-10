@@ -70,7 +70,7 @@ export default function ProjectModal({
 								name="name"
 								id="name"
 								required
-								className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+								className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
 							/>
 						</div>
 						<div>
@@ -85,7 +85,7 @@ export default function ProjectModal({
 								name="shortCode"
 								id="shortCode"
 								required
-								className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+								className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
 							/>
 						</div>
 						<div>
@@ -99,7 +99,7 @@ export default function ProjectModal({
 								name="description"
 								id="description"
 								rows={3}
-								className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+								className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
 							/>
 						</div>
 					</div>
@@ -113,7 +113,7 @@ export default function ProjectModal({
 						</button>
 						<button
 							type="submit"
-							className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+							className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
 						>
 							Create
 						</button>

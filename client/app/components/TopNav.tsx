@@ -9,13 +9,13 @@ export default function TopNav() {
 					<nav className="ml-8 flex space-x-4">
 						<Link
 							to="/"
-							className="text-sm font-medium text-gray-700 hover:text-indigo-600"
+							className="text-sm font-medium text-gray-700 hover:text-sky-600"
 						>
 							Projects
 						</Link>
 						<Link
 							to="/configuration"
-							className="text-sm font-medium text-gray-700 hover:text-indigo-600"
+							className="text-sm font-medium text-gray-700 hover:text-sky-600"
 						>
 							Configuration
 						</Link>

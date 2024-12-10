@@ -66,7 +66,7 @@ export default function Projects() {
 					</h2>
 					<button
 						onClick={() => setIsModalOpen(true)}
-						className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+						className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
 					>
 						New Project
 					</button>

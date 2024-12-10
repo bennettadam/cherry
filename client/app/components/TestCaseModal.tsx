@@ -71,7 +71,7 @@ export default function TestCaseModal({
 
 	const renderField = (field: FormField) => {
 		const baseClasses =
-			'mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500'
+			'mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500'
 
 		switch (field.type) {
 			case 'textarea':
@@ -153,7 +153,7 @@ export default function TestCaseModal({
 									id="steps"
 									rows={5}
 									required
-									className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+									className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
 									placeholder="1. Navigate to login page&#10;2. Enter credentials&#10;3. Click login button&#10;4. Verify dashboard is displayed"
 								/>
 								<p className="text-xs text-gray-500">
@@ -173,7 +173,7 @@ export default function TestCaseModal({
 						</button>
 						<button
 							type="submit"
-							className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+							className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
 						>
 							Create
 						</button>
