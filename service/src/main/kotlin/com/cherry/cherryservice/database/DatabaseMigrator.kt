@@ -99,6 +99,36 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
                         )
                     """.trimIndent())
 
+                    // test runs
+                    jdbcTemplate.execute("""
+                        CREATE TABLE test_runs (
+                            id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                            external_id UUID DEFAULT gen_random_uuid(),
+                            creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            modify_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            project_id BIGINT REFERENCES workspace_projects(id),
+                            status TEXT NOT NULL,
+                            title TEXT NOT NULL,
+                            description TEXT
+                        )
+                    """.trimIndent())
+
+                    // test case runs
+                    jdbcTemplate.execute("""
+                        CREATE TABLE test_case_runs (
+                            id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                            external_id UUID DEFAULT gen_random_uuid(),
+                            creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            modify_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            test_run_id BIGINT REFERENCES test_runs(id),
+                            test_case_id BIGINT REFERENCES test_cases(id),
+                            status TEXT NOT NULL,
+                            title TEXT NOT NULL,
+                            description TEXT,
+                            test_instructions TEXT
+                        )
+                    """.trimIndent())
+
                     val criticalText = "Critical"
                     jdbcTemplate.update("INSERT INTO property_configurations (source, name, property_type, is_required, default_value, enum_options) VALUES (?, ?, ?, ?, ?, ?);",
                         PropertyConfigurationSource.SYSTEM.toString(),
