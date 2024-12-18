@@ -1,6 +1,7 @@
 package com.cherry.cherryservice.models
 
 import com.cherry.cherryservice.dto.PropertyConfigurationSource
+import com.cherry.cherryservice.dto.testruns.TestRunDTO
 import com.cherry.cherryservice.dto.testruns.TestRunStatus
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
@@ -37,4 +38,8 @@ class TestRun (
 
     @Column(name = "description")
     var description: String?,
-)
+) {
+    fun toDTO(): TestRunDTO {
+        return TestRunDTO(externalID, creationDate, status, title, description)
+    }
+}

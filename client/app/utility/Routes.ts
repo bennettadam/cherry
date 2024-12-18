@@ -28,4 +28,12 @@ export class APIRoute {
 	static property(propertyID: string) {
 		return `http://localhost:8080/api/v1/workspace/properties/${propertyID}`
 	}
+
+	static testRuns(projectID: string) {
+		return `http://localhost:8080/api/v1/workspace/projects/${projectID}/test-runs`
+	}
+
+	static testCaseRuns(testRunID: string) {
+		return `http://localhost:8080/api/v1/workspace/test-runs/${testRunID}/test-cases`
+	}
 }

@@ -4,6 +4,8 @@ import com.cherry.cherryservice.dto.*
 import com.cherry.cherryservice.dto.projects.CreateWorkspaceProjectDTO
 import com.cherry.cherryservice.dto.testcases.CreateTestCaseDTO
 import com.cherry.cherryservice.dto.testcases.TestCaseDTO
+import com.cherry.cherryservice.dto.testruns.CreateTestRunDTO
+import com.cherry.cherryservice.dto.testruns.UpdateTestCaseRunDTO
 import com.cherry.cherryservice.services.WorkspaceService
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.springframework.http.ResponseEntity
@@ -81,6 +83,50 @@ class WorkspaceController(
     fun deleteProperty(@PathVariable propertyConfigurationID: UUID): ResponseEntity<Any> {
         try {
             workspaceService.deleteProperty(propertyConfigurationID)
+            return ResponseEntity.ok("Success")
+        }
+        catch (e: IllegalArgumentException) {
+            return ResponseEntity.badRequest().body(e.message)
+        }
+    }
+
+    @GetMapping("/projects/{projectID}/test-runs")
+    fun retrieveTestRuns(@PathVariable projectID: UUID): ResponseEntity<Any> {
+        try {
+            val testRuns = workspaceService.retrieveTestRuns(projectID)
+            return ResponseEntity.ok(FetchResponse(testRuns))
+        }
+        catch (e: IllegalArgumentException) {
+            return ResponseEntity.badRequest().body(e.message)
+        }
+    }
+
+    @GetMapping("/test-runs/{testRunID}/test-cases")
+    fun retrieveTestCaseRuns(@PathVariable testRunID: UUID): ResponseEntity<Any> {
+        try {
+            val testCaseRuns = workspaceService.retrieveTestCaseRuns(testRunID)
+            return ResponseEntity.ok(FetchResponse(testCaseRuns))
+        }
+        catch (e: IllegalArgumentException) {
+            return ResponseEntity.badRequest().body(e.message)
+        }
+    }
+
+    @PostMapping("/projects/{projectID}/test-runs")
+    fun createTestRun(@PathVariable projectID: UUID, @RequestBody request: CreateTestRunDTO): ResponseEntity<Any> {
+        try {
+            workspaceService.createTestRun(projectID, request)
+            return ResponseEntity.ok("Success")
+        }
+        catch (e: IllegalArgumentException) {
+            return ResponseEntity.badRequest().body(e.message)
+        }
+    }
+
+    @PutMapping("/test-runs/{testRunID}/test-cases")
+    fun updateTestCaseRun(@PathVariable testRunID: UUID, @RequestBody request: UpdateDTO<UpdateTestCaseRunDTO>): ResponseEntity<Any> {
+        try {
+            workspaceService.updateTestCaseRun(testRunID, request)
             return ResponseEntity.ok("Success")
         }
         catch (e: IllegalArgumentException) {

@@ -60,3 +60,34 @@ export interface UpdateRequestBody<T> extends Record<string, any> {
 	id: string
 	data: T
 }
+
+export enum TestRunStatus {
+	pending = 'PENDING',
+	abort = 'ABORT',
+	complete = 'COMPLETE',
+}
+
+export interface TestRun {
+	testRunID: string
+	creationDate: number
+	status: TestRunStatus
+	title: string
+	description?: string
+}
+
+export enum TestCaseRunStatus {
+	pending = 'PENDING',
+	pass = 'PASS',
+	fail = 'FAIL',
+	skip = 'SKIP',
+}
+
+export interface TestCaseRun {
+	testCaseRunID: string
+	creationDate: number
+	testCase: TestCase
+	status: TestCaseRunStatus
+	title: string
+	description?: string
+	testInstructions?: string
+}

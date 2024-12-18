@@ -47,10 +47,7 @@ class TestCase(
     fun toDTO(): TestCaseDTO {
         val propertyValueMap = emptyMap<UUID, String>().toMutableMap()
         for (propertyValue in propertyValues) {
-            val property = propertyValue.value
-            if (property != null) {
-                propertyValueMap[propertyValue.propertyConfiguration.externalID] = property
-            }
+            propertyValueMap[propertyValue.propertyConfiguration.externalID] = propertyValue.value
         }
 
         return TestCaseDTO(externalID, creationDate, project.externalID, testCaseNumber, title, description, testInstructions, propertyValueMap)

@@ -5,14 +5,9 @@ import com.cherry.cherryservice.dto.projects.CreateWorkspaceProjectDTO
 import com.cherry.cherryservice.dto.projects.WorkspaceProjectDTO
 import com.cherry.cherryservice.dto.testcases.CreateTestCaseDTO
 import com.cherry.cherryservice.dto.testcases.TestCaseDTO
-import com.cherry.cherryservice.models.PropertyConfiguration
-import com.cherry.cherryservice.models.TestCase
-import com.cherry.cherryservice.models.TestCasePropertyValue
-import com.cherry.cherryservice.models.WorkspaceProject
-import com.cherry.cherryservice.repositories.PropertyConfigurationRepository
-import com.cherry.cherryservice.repositories.TestCasePropertyValueRepository
-import com.cherry.cherryservice.repositories.TestCaseRepository
-import com.cherry.cherryservice.repositories.WorkspaceProjectRepository
+import com.cherry.cherryservice.dto.testruns.*
+import com.cherry.cherryservice.models.*
+import com.cherry.cherryservice.repositories.*
 import jakarta.transaction.Transactional
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -25,6 +20,8 @@ class WorkspaceService(
     private val testCaseRepository: TestCaseRepository,
     private val propertyConfigurationRepository: PropertyConfigurationRepository,
     private val testCasePropertyValueRepository: TestCasePropertyValueRepository,
+    private val testRunRepository: TestRunRepository,
+    private val testCaseRunRepository: TestCaseRunRepository,
 ) {
     private val log: Log = LogFactory.getLog(javaClass)
 
@@ -154,7 +151,6 @@ class WorkspaceService(
 
     @Transactional
     fun createProperty(property: CreatePropertyConfigurationDTO) {
-        println(property)
         if (property.propertyType == PropertyConfigurationType.ENUM) {
             requireNotNull(property.enumOptions) { "Missing enum configuration" }
         }
@@ -199,5 +195,57 @@ class WorkspaceService(
 
         // finally, delete the property configuration
         propertyConfigurationRepository.deleteByExternalID(propertyConfigurationID)
+    }
+
+    fun retrieveTestRuns(projectID: UUID): List<TestRunDTO> {
+        val project = projectRepository.findByExternalID(projectID)
+        requireNotNull(project) { "No project found for id $projectID" }
+        val testRuns = testRunRepository.findAllByProject(project)
+        return testRuns.map { it.toDTO() }
+    }
+
+    @Transactional
+    fun retrieveTestCaseRuns(testRunID: UUID): List<TestCaseRunDTO> {
+        val testRun = testRunRepository.findByExternalID(testRunID)
+        requireNotNull(testRun) { "No test run found for id $testRunID" }
+        val testCaseRuns = testCaseRunRepository.findAllByTestRun(testRun)
+        return testCaseRuns.map { it.toDTO() }
+    }
+
+    @Transactional
+    fun createTestRun(projectID: UUID, testRun: CreateTestRunDTO) {
+        val project = projectRepository.findByExternalID(projectID)
+        requireNotNull(project) { "No project found for id $projectID" }
+
+        val newTestRun = TestRun(
+            project = project,
+            status = TestRunStatus.PENDING,
+            title = testRun.title,
+            description = testRun.description
+        )
+        testRunRepository.save(newTestRun)
+
+        for (testCaseID in testRun.testCaseIDs) {
+            val testCaseModel = testCaseRepository.findByExternalID(testCaseID)
+            requireNotNull(testCaseModel) { "No test case found for id $testCaseID" }
+            val newTestCaseRun = TestCaseRun(
+                testRun = newTestRun,
+                testCase = testCaseModel,
+                status = TestCaseRunStatus.PENDING,
+                title = testCaseModel.title,
+                description = testCaseModel.description,
+                testInstructions = testCaseModel.testInstructions
+            )
+            testCaseRunRepository.save(newTestCaseRun)
+        }
+    }
+
+    @Transactional
+    fun updateTestCaseRun(testRunID: UUID, updateDTO: UpdateDTO<UpdateTestCaseRunDTO>) {
+        val testCaseRun = testCaseRunRepository.findByExternalID(updateDTO.id)
+        requireNotNull(testCaseRun) { "No test case found for id ${updateDTO.id}" }
+        require(testCaseRun.testRun.externalID == testRunID) { "Test run id of test case does not match request test run id $testRunID" }
+        testCaseRun.status = updateDTO.data.status
+        testCaseRunRepository.save(testCaseRun)
     }
 }

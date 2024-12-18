@@ -41,7 +41,7 @@ export async function loader() {
 		throw new Response('Failed to fetch properties', { status: 500 })
 	}
 
-	return (await response.json()) as FetchResponse<Project>
+	return (await response.json()) as FetchResponse<Project[]>
 }
 
 export default function Projects() {

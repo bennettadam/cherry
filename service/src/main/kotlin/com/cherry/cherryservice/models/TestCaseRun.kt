@@ -1,5 +1,6 @@
 package com.cherry.cherryservice.models
 
+import com.cherry.cherryservice.dto.testruns.TestCaseRunDTO
 import com.cherry.cherryservice.dto.testruns.TestCaseRunStatus
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
@@ -33,7 +34,7 @@ class TestCaseRun(
 
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
-    val status: TestCaseRunStatus,
+    var status: TestCaseRunStatus,
 
     @Column(name = "title")
     var title: String,
@@ -43,4 +44,8 @@ class TestCaseRun(
 
     @Column(name = "test_instructions")
     var testInstructions: String?,
-)
+) {
+    fun toDTO(): TestCaseRunDTO {
+        return TestCaseRunDTO(externalID, creationDate, testCase.toDTO(), status, title, description, testInstructions)
+    }
+}
