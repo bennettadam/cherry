@@ -1,6 +1,6 @@
 import { json, type LoaderFunctionArgs } from '@remix-run/node'
-import { useLoaderData, Link } from '@remix-run/react'
-import { APIRoute } from '~/utility/Routes'
+import { useLoaderData, Link, useNavigate, useParams } from '@remix-run/react'
+import { APIRoute, Route } from '~/utility/Routes'
 import { TestRun, TestRunStatus } from '~/models/types'
 import type { FetchResponse } from '~/models/types'
 
@@ -26,14 +26,30 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 export default function TestRunsIndex() {
 	const { testRuns } = useLoaderData<typeof loader>()
+	const { projectID } = useParams()
+
+	if (!projectID) {
+		return <div>Project ID is required</div>
+	}
 
 	return (
 		<div className="p-6">
-			<div className="mb-6">
-				<h1 className="text-2xl font-semibold text-gray-900">Test Runs</h1>
-				<p className="mt-2 text-gray-600">
-					View all test runs for this project
-				</p>
+			<div className="mb-6 flex justify-between items-center">
+				<div>
+					<h1 className="text-2xl font-semibold text-gray-900">
+						Test Runs
+					</h1>
+					<p className="mt-2 text-gray-600">
+						View all test runs for this project
+					</p>
+				</div>
+
+				<Link
+					to={Route.newTestRun(projectID)}
+					className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
+				>
+					Create Test Run
+				</Link>
 			</div>
 			<div className="overflow-hidden rounded-lg border border-gray-200">
 				<table className="min-w-full divide-y divide-gray-200">

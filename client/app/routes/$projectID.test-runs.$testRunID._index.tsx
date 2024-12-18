@@ -5,7 +5,7 @@ import {
 	useParams,
 	useNavigate,
 } from '@remix-run/react'
-import { APIRoute } from '~/utility/Routes'
+import { Route, APIRoute } from '~/utility/Routes'
 import { TestRun } from '~/models/types'
 import type { FetchResponse, TestCaseRun } from '~/models/types'
 import { loader as testRunsLoader } from '~/routes/$projectID.test-runs._index'
@@ -71,7 +71,7 @@ export default function TestRunDetails() {
 
 	return (
 		<div className="p-6">
-			<div className="mb-6">
+			<div className="mb-6 flex justify-between items-center">
 				<h1 className="text-2xl font-semibold text-gray-900">
 					{testRun.title}
 				</h1>

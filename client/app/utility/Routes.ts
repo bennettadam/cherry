@@ -10,6 +10,14 @@ export class Route {
 	static get viewProperties() {
 		return '/configuration/properties'
 	}
+
+	static newTestRun(projectID: string) {
+		return `/${projectID}/test-runs/new`
+	}
+
+	static viewTestRuns(projectID: string) {
+		return `/${projectID}/test-runs`
+	}
 }
 
 export class APIRoute {
