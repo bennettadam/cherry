@@ -4,7 +4,7 @@ import {
 	type ActionFunctionArgs,
 } from '@remix-run/node'
 import { useLoaderData, Link, useFetcher } from '@remix-run/react'
-import { APIRoute } from '~/utility/Routes'
+import { APIRoute, Route } from '~/utility/Routes'
 import {
 	FetchResponse,
 	TestCaseRun,
@@ -123,9 +123,20 @@ export default function TestCaseRunDetails() {
 			</Link>
 
 			<div className="mb-6">
-				<h1 className="text-2xl font-semibold text-gray-900">
-					{testCaseRun.title}
-				</h1>
+				<div className="flex items-center gap-4">
+					<h1 className="text-2xl font-semibold text-gray-900">
+						{testCaseRun.title}
+					</h1>
+					<Link
+						to={Route.viewTestCase(
+							testCaseRun.testCase.projectID,
+							testCaseRun.testCase.testCaseID
+						)}
+						className="text-sm text-gray-600 hover:text-gray-900 hover:underline"
+					>
+						View Original Test Case
+					</Link>
+				</div>
 				<p className="mt-2 text-gray-600">Test Case Run Details</p>
 			</div>
 
