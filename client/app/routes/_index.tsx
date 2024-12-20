@@ -3,8 +3,8 @@ import { useLoaderData, useSubmit, Link, useFetcher } from '@remix-run/react'
 import { useState } from 'react'
 import ProjectModal from '~/components/ProjectModal'
 import type { FetchResponse } from '~/models/types'
-import { APIRoute } from '../utility/Routes'
-import { NewProject, Project } from '../models/project'
+import { APIRoute, Route } from '~/utility/Routes'
+import { NewProject, Project } from '~/models/project'
 
 export async function action({ request }: ActionFunctionArgs) {
 	try {
@@ -81,7 +81,7 @@ export default function Projects() {
 							{data.map((project) => (
 								<li key={project.projectID}>
 									<Link
-										to={`${project.projectID}`}
+										to={Route.viewTests(project.projectID)}
 										className="block p-4 transition-colors hover:bg-gray-50"
 									>
 										<div className="flex justify-between">

@@ -1,6 +1,7 @@
 import { Link } from '@remix-run/react'
+import { Route } from '~/utility/Routes'
 
-export default function TopNav() {
+export default function TopNavigation() {
 	return (
 		<div className="border-b border-gray-200 bg-white">
 			<div className="flex h-14 items-center px-4">
@@ -14,7 +15,7 @@ export default function TopNav() {
 							Projects
 						</Link>
 						<Link
-							to="/configuration"
+							to={Route.viewProperties}
 							className="text-sm font-medium text-gray-700 hover:text-sky-600"
 						>
 							Configuration
