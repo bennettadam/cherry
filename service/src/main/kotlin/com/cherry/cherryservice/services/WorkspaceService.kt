@@ -241,11 +241,49 @@ class WorkspaceService(
     }
 
     @Transactional
+    fun updateTestRun(testRunID: UUID, updateDTO: UpdateDTO<UpdateTestRunDTO>) {
+        val testRun = testRunRepository.findByExternalID(testRunID)
+        requireNotNull(testRun) { "No test run found for id $testRunID" }
+
+        testRun.title = updateDTO.data.title
+        testRun.description = updateDTO.data.description
+        testRun.status = updateDTO.data.status
+
+        testRunRepository.save(testRun)
+    }
+
+    @Transactional
+    fun deleteTestRun(testRunID: UUID) {
+        val testRun = testRunRepository.findByExternalID(testRunID)
+        requireNotNull(testRun) { "No test run found for id $testRunID" }
+
+        // First delete all associated test case runs
+        testCaseRunRepository.deleteAllByTestRun(testRun)
+        
+        // Then delete the test run itself
+        testRunRepository.delete(testRun)
+    }
+
+    @Transactional
     fun updateTestCaseRun(testRunID: UUID, updateDTO: UpdateDTO<UpdateTestCaseRunDTO>) {
         val testCaseRun = testCaseRunRepository.findByExternalID(updateDTO.id)
         requireNotNull(testCaseRun) { "No test case found for id ${updateDTO.id}" }
         require(testCaseRun.testRun.externalID == testRunID) { "Test run id of test case does not match request test run id $testRunID" }
+
         testCaseRun.status = updateDTO.data.status
         testCaseRunRepository.save(testCaseRun)
+
+        val testRun = testCaseRun.testRun
+        val testCaseRuns = testCaseRunRepository.findAllByTestRun(testRun)
+
+        val isTestRunComplete = testCaseRuns.all { it.status != TestCaseRunStatus.PENDING }
+        if (isTestRunComplete) {
+            testRun.status = TestRunStatus.COMPLETE
+            testRunRepository.save(testRun)
+        }
+        else if (testRun.status == TestRunStatus.PENDING) {
+            testRun.status = TestRunStatus.IN_PROGRESS
+            testRunRepository.save(testRun)
+        }
     }
 }

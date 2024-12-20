@@ -221,7 +221,7 @@ export default function TestCaseRunDetails() {
 					<h2 className="text-xl font-semibold text-gray-900 mb-4">
 						Test Instructions
 					</h2>
-					<div className="prose prose-sm max-w-none">
+					<div className="prose prose-sm max-w-none whitespace-pre-wrap">
 						{testCaseRun.testCase.testInstructions ||
 							'No test instructions available'}
 					</div>

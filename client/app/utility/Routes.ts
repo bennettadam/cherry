@@ -18,6 +18,14 @@ export class Route {
 	static viewTestRuns(projectID: string) {
 		return `/${projectID}/test-runs`
 	}
+
+	static viewTestRun(projectID: string, testRunID: string) {
+		return `/${projectID}/test-runs/${testRunID}`
+	}
+
+	static editTestRun(projectID: string, testRunID: string) {
+		return `/${projectID}/test-runs/${testRunID}/edit`
+	}
 }
 
 export class APIRoute {
@@ -39,6 +47,10 @@ export class APIRoute {
 
 	static testRuns(projectID: string) {
 		return `http://localhost:8080/api/v1/workspace/projects/${projectID}/test-runs`
+	}
+
+	static testRunByID(testRunID: string) {
+		return `http://localhost:8080/api/v1/workspace/test-runs/${testRunID}`
 	}
 
 	static testCaseRuns(testRunID: string) {

@@ -3,6 +3,7 @@ import { useLoaderData, Link, useNavigate, useParams } from '@remix-run/react'
 import { APIRoute, Route } from '~/utility/Routes'
 import { TestRun, TestRunStatus } from '~/models/types'
 import type { FetchResponse } from '~/models/types'
+import { TestRunStatusBadge } from '~/components/TestRunStatusBadge'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	if (!params.projectID) {
@@ -84,7 +85,7 @@ export default function TestRunsIndex() {
 									</Link>
 								</td>
 								<td className="whitespace-nowrap px-6 py-4">
-									{createStatusSpan(testRun.status)}
+									<TestRunStatusBadge status={testRun.status} />
 								</td>
 								<td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
 									{new Date(testRun.creationDate).toLocaleString()}
@@ -112,27 +113,4 @@ export default function TestRunsIndex() {
 			</div>
 		</div>
 	)
-}
-
-function createStatusSpan(status: TestRunStatus) {
-	switch (status) {
-		case TestRunStatus.pending:
-			return (
-				<span className="inline-flex rounded-full px-2 text-xs font-semibold leading-5 bg-gray-100 text-gray-800">
-					{status}
-				</span>
-			)
-		case TestRunStatus.abort:
-			return (
-				<span className="inline-flex rounded-full px-2 text-xs font-semibold leading-5 bg-red-100 text-red-800">
-					{status}
-				</span>
-			)
-		case TestRunStatus.complete:
-			return (
-				<span className="inline-flex rounded-full px-2 text-xs font-semibold leading-5 bg-green-100 text-green-800">
-					{status}
-				</span>
-			)
-	}
 }

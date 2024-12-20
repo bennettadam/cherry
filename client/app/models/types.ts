@@ -63,6 +63,7 @@ export interface UpdateRequestBody<T> extends Record<string, any> {
 
 export enum TestRunStatus {
 	pending = 'PENDING',
+	inProgress = 'IN_PROGRESS',
 	abort = 'ABORT',
 	complete = 'COMPLETE',
 }
@@ -90,4 +91,10 @@ export interface TestCaseRun {
 	title: string
 	description?: string
 	testInstructions?: string
+}
+
+export interface UpdateTestRun {
+	title: string
+	description?: string
+	status: TestRunStatus
 }

@@ -9,4 +9,6 @@ interface TestCaseRunRepository : JpaRepository<TestCaseRun, Long> {
     fun findByExternalID(externalID: UUID): TestCaseRun?
 
     fun findAllByTestRun(testRun: TestRun): List<TestCaseRun>
+
+    fun deleteAllByTestRun(testRun: TestRun)
 }

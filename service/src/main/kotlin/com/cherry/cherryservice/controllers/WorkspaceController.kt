@@ -6,6 +6,7 @@ import com.cherry.cherryservice.dto.testcases.CreateTestCaseDTO
 import com.cherry.cherryservice.dto.testcases.TestCaseDTO
 import com.cherry.cherryservice.dto.testruns.CreateTestRunDTO
 import com.cherry.cherryservice.dto.testruns.UpdateTestCaseRunDTO
+import com.cherry.cherryservice.dto.testruns.UpdateTestRunDTO
 import com.cherry.cherryservice.services.WorkspaceService
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.springframework.http.ResponseEntity
@@ -116,6 +117,28 @@ class WorkspaceController(
     fun createTestRun(@PathVariable projectID: UUID, @RequestBody request: CreateTestRunDTO): ResponseEntity<Any> {
         try {
             workspaceService.createTestRun(projectID, request)
+            return ResponseEntity.ok("Success")
+        }
+        catch (e: IllegalArgumentException) {
+            return ResponseEntity.badRequest().body(e.message)
+        }
+    }
+
+    @PutMapping("/test-runs/{testRunID}")
+    fun updateTestRun(@PathVariable testRunID: UUID, @RequestBody request: UpdateDTO<UpdateTestRunDTO>): ResponseEntity<Any> {
+        try {
+            workspaceService.updateTestRun(testRunID, request)
+            return ResponseEntity.ok("Success")
+        }
+        catch (e: IllegalArgumentException) {
+            return ResponseEntity.badRequest().body(e.message)
+        }
+    }
+
+    @DeleteMapping("/test-runs/{testRunID}")
+    fun deleteTestRun(@PathVariable testRunID: UUID): ResponseEntity<Any> {
+        try {
+            workspaceService.deleteTestRun(testRunID)
             return ResponseEntity.ok("Success")
         }
         catch (e: IllegalArgumentException) {

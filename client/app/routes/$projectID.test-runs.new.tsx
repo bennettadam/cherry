@@ -70,6 +70,13 @@ export default function NewTestRun() {
 	const [selectedTestCases, setSelectedTestCases] = useState<TestCase[]>([])
 	const submit = useSubmit()
 
+	const todayDateString = new Date().toLocaleDateString('en-US', {
+		year: 'numeric',
+		month: 'numeric',
+		day: 'numeric',
+	})
+	const defaultTitle = `${todayDateString} Test Run`
+
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
 		setIsSubmitting(true)
@@ -125,6 +132,7 @@ export default function NewTestRun() {
 									name="title"
 									id="title"
 									required
+									defaultValue={defaultTitle}
 									className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
 								/>
 							</div>

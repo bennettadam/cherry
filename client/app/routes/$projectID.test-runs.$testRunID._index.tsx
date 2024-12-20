@@ -1,15 +1,29 @@
-import { json, type LoaderFunctionArgs } from '@remix-run/node'
+import {
+	json,
+	type LoaderFunctionArgs,
+	type ActionFunctionArgs,
+	redirect,
+} from '@remix-run/node'
 import {
 	useLoaderData,
 	useRouteLoaderData,
 	useParams,
 	useNavigate,
+	useSubmit,
 } from '@remix-run/react'
 import { Route, APIRoute } from '~/utility/Routes'
-import { TestRun } from '~/models/types'
-import type { FetchResponse, TestCaseRun } from '~/models/types'
+import { TestRun, TestRunStatus } from '~/models/types'
+import type {
+	FetchResponse,
+	TestCaseRun,
+	UpdateRequestBody,
+	UpdateTestRun,
+} from '~/models/types'
 import { loader as testRunsLoader } from '~/routes/$projectID.test-runs._index'
 import { useState } from 'react'
+import { ActionMenu, type ActionMenuItem } from '~/components/ActionMenu'
+import { TestRunStatusBadge } from '~/components/TestRunStatusBadge'
+import { TestCaseRunStatusBadge } from '~/components/TestCaseRunStatusBadge'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	if (!params.projectID || !params.testRunID) {
@@ -62,19 +76,175 @@ export async function loader({ params }: LoaderFunctionArgs) {
 	return {
 		testCaseRuns: testCaseRunsData.data,
 		testRun,
+		projectID: params.projectID,
 	}
 }
 
+export async function action({ request, params }: ActionFunctionArgs) {
+	const projectID = params.projectID
+	const testRunID = params.testRunID
+	if (!projectID) {
+		throw new Response('Project ID is required', { status: 400 })
+	}
+	if (!testRunID) {
+		throw new Response('Test Run ID is required', { status: 400 })
+	}
+
+	const { intent, testRunUpdate } = await request.json()
+
+	if (intent === 'abort') {
+		const response = await fetch(APIRoute.testRunByID(testRunID), {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(testRunUpdate),
+		})
+
+		if (!response.ok) {
+			throw new Response('Failed to abort test run', { status: 500 })
+		}
+
+		return redirect(Route.viewTestRuns(projectID))
+	}
+
+	if (intent === 'delete') {
+		const response = await fetch(APIRoute.testRunByID(testRunID), {
+			method: 'DELETE',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		})
+
+		if (!response.ok) {
+			throw new Response('Failed to delete test run', { status: 500 })
+		}
+
+		return redirect(Route.viewTestRuns(projectID))
+	}
+
+	throw new Response('Invalid request', { status: 400 })
+}
+
 export default function TestRunDetails() {
-	const { testCaseRuns, testRun } = useLoaderData<typeof loader>()
+	const { testCaseRuns, testRun, projectID } = useLoaderData<typeof loader>()
 	const navigate = useNavigate()
+	const submit = useSubmit()
+
+	const menuItems: ActionMenuItem[] = (() => {
+		const deleteItem: ActionMenuItem = {
+			label: 'Delete test run',
+			action: () => {
+				if (
+					window.confirm(
+						'Are you sure you want to delete this test run? This action cannot be undone.'
+					)
+				) {
+					submit(
+						{ intent: 'delete' },
+						{
+							method: 'POST',
+							encType: 'application/json',
+						}
+					)
+				}
+			},
+			variant: 'danger',
+		}
+
+		const editItem: ActionMenuItem = {
+			label: 'Edit test run',
+			action: () => {
+				navigate(Route.editTestRun(projectID, testRun.testRunID))
+			},
+		}
+
+		switch (testRun.status) {
+			case TestRunStatus.pending:
+			case TestRunStatus.inProgress:
+				return [
+					{
+						label: 'Abort test run',
+						action: () => {
+							const testRunUpdate: UpdateRequestBody<UpdateTestRun> = {
+								id: testRun.testRunID,
+								data: {
+									title: testRun.title,
+									description: testRun.description,
+									status: TestRunStatus.abort,
+								},
+							}
+
+							submit(
+								{ intent: 'abort', testRunUpdate },
+								{
+									method: 'POST',
+									encType: 'application/json',
+								}
+							)
+						},
+					},
+					editItem,
+					deleteItem,
+				]
+			case TestRunStatus.abort:
+				return [
+					{
+						label: 'Resume test run',
+						action: () => {
+							const testRunUpdate: UpdateRequestBody<UpdateTestRun> = {
+								id: testRun.testRunID,
+								data: {
+									title: testRun.title,
+									description: testRun.description,
+									status: TestRunStatus.pending,
+								},
+							}
+
+							submit(
+								{ intent: 'abort', testRunUpdate },
+								{
+									method: 'POST',
+									encType: 'application/json',
+								}
+							)
+						},
+					},
+					editItem,
+					deleteItem,
+				]
+			case TestRunStatus.complete:
+				return [editItem, deleteItem]
+			default:
+				return [editItem, deleteItem]
+		}
+	})()
 
 	return (
 		<div className="p-6">
-			<div className="mb-6 flex justify-between items-center">
-				<h1 className="text-2xl font-semibold text-gray-900">
-					{testRun.title}
-				</h1>
+			<div className="mb-6 flex justify-between items-start">
+				<div>
+					<h1 className="text-2xl font-semibold text-gray-900">
+						{testRun.title}
+					</h1>
+					<div className="mt-4 grid grid-cols-2 gap-4">
+						<div>
+							<h3 className="text-lg font-medium text-gray-900 mb-1">
+								Status
+							</h3>
+							<TestRunStatusBadge status={testRun.status} />
+						</div>
+						<div>
+							<h3 className="text-lg font-medium text-gray-900 mb-1">
+								Description
+							</h3>
+							<p className="text-gray-700 mb-4">
+								{testRun.description || 'No description provided'}
+							</p>
+						</div>
+					</div>
+				</div>
+				<ActionMenu items={menuItems} label="Test Run Settings" />
 			</div>
 
 			<h3 className="text-lg font-medium text-gray-900 mb-4">Test Cases</h3>
@@ -109,7 +279,7 @@ export default function TestRunDetails() {
 								{testCaseRun.title}
 							</td>
 							<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-								{testCaseRun.status}
+								<TestCaseRunStatusBadge status={testCaseRun.status} />
 							</td>
 							<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
 								{new Date(testCaseRun.creationDate).toLocaleString()}
