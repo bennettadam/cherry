@@ -10,14 +10,9 @@ import {
 	useLoaderData,
 	useSubmit,
 } from '@remix-run/react'
-import type { loader as projectLoader } from '~/routes/$projectID'
 import { APIRoute, Route } from '~/utility/Routes'
 import { TestCaseForm, TestCaseFormMode } from '~/components/TestCaseForm'
-import {
-	CreateTestCase,
-	FetchResponse,
-	PropertyConfiguration,
-} from '~/models/types'
+import { FetchResponse, PropertyConfiguration } from '~/models/types'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	const propertiesResponse = await fetch(APIRoute.properties, {
@@ -34,16 +29,16 @@ export async function loader({ params }: LoaderFunctionArgs) {
 	const properties = (await propertiesResponse.json()) as FetchResponse<
 		PropertyConfiguration[]
 	>
-	return json({ properties: properties.data })
+	return { properties: properties.data }
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-	const projectID = params.projectID
-	if (!projectID) {
-		throw new Response('Project ID is required', { status: 400 })
+	const projectShortCode = params.projectShortCode
+	if (!projectShortCode) {
+		throw new Response('Project short code is required', { status: 400 })
 	}
 
-	const response = await fetch(APIRoute.testCases(projectID), {
+	const response = await fetch(APIRoute.testCases(projectShortCode), {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -57,20 +52,14 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		})
 	}
 
-	return redirect(Route.viewTests(projectID))
+	return redirect(Route.viewTestCases(projectShortCode))
 }
 
 export default function NewTestCase() {
 	const navigate = useNavigate()
 	const submit = useSubmit()
-	const { properties } = useLoaderData<typeof loader>()
-	const routeData =
-		useRouteLoaderData<typeof projectLoader>('routes/$projectID')
 
-	if (!routeData?.project) {
-		return <p>No project found</p>
-	}
-	const project = routeData.project
+	const { properties } = useLoaderData<typeof loader>()
 
 	return (
 		<div>
@@ -83,7 +72,7 @@ export default function NewTestCase() {
 				<TestCaseForm
 					properties={properties}
 					mode={TestCaseFormMode.create}
-					onCancel={() => navigate(Route.viewTests(project.projectID))}
+					onCancel={() => navigate('..')}
 					onSubmit={(testCase) => {
 						submit(testCase, {
 							method: 'POST',

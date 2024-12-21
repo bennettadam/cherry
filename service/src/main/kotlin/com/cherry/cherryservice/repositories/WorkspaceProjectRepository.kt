@@ -6,4 +6,6 @@ import java.util.*
 
 interface WorkspaceProjectRepository : JpaRepository<WorkspaceProject, Long> {
     fun findByExternalID(externalID: UUID): WorkspaceProject?
+
+    fun findByProjectShortCode(projectShortCode: String): WorkspaceProject?
 }

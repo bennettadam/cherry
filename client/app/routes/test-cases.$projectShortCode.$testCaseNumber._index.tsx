@@ -1,83 +1,12 @@
-import { type LoaderFunctionArgs } from '@remix-run/node'
-import {
-	useLoaderData,
-	Link,
-	useRouteLoaderData,
-	useParams,
-	useMatches,
-} from '@remix-run/react'
-import { APIRoute } from '../utility/Routes'
-import {
-	FetchResponse,
-	PropertyConfiguration,
-	PropertyValue,
-	TestCase,
-} from '../models/types'
-import { Tools } from '../utility/Tools'
-
-export async function loader({ params }: LoaderFunctionArgs) {
-	const propertiesResponse = await fetch(APIRoute.properties, {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-	})
-
-	if (!propertiesResponse.ok) {
-		throw new Error('Failed to fetch properties')
-	}
-
-	const properties = (await propertiesResponse.json()) as FetchResponse<
-		PropertyConfiguration[]
-	>
-
-	const projectID = params.projectID
-	if (!projectID) {
-		throw new Response('Project ID is required', { status: 400 })
-	}
-	const testCaseID = params.testCaseID
-	if (!testCaseID) {
-		throw new Response('Test case ID is required', { status: 400 })
-	}
-
-	const response = await fetch(APIRoute.testCases(projectID), {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-	})
-
-	if (!response.ok) {
-		throw new Response('Failed to fetch test cases', { status: 500 })
-	}
-
-	const testCases = (await response.json()) as FetchResponse<TestCase[]>
-	const testCase = testCases.data.find(
-		(testCase) => testCase.testCaseID === testCaseID
-	)
-
-	if (!testCase) {
-		throw new Response('Test case not found', { status: 404 })
-	}
-
-	return { testCase, properties: properties.data }
-}
+import { Link, useOutletContext } from '@remix-run/react'
+import { ProjectTestCaseOutletContext } from '~/models/types'
 
 export default function TestCaseDetails() {
-	const { testCaseID } = useParams()
-	if (!testCaseID) {
-		return <p>No test case ID found in route</p>
-	}
-
-	const { testCase, properties } = useLoaderData<typeof loader>()
-
-	const propertyValues: PropertyValue[] = Tools.mapTestCaseProperties(
-		testCase,
-		properties
-	)
+	const { testCase, propertyValues } =
+		useOutletContext<ProjectTestCaseOutletContext>()
 
 	return (
-		<div className="p-6">
+		<div>
 			<div className="mb-6">
 				<div className="flex items-center justify-between">
 					<h2 className="text-2xl font-semibold text-gray-900">

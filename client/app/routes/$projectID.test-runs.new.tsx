@@ -25,7 +25,7 @@ interface CreateTestRun extends Record<string, any> {
 export async function loader({ params }: ActionFunctionArgs) {
 	const [propertiesResponse, testCasesResponse] = await Promise.all([
 		fetch(APIRoute.properties),
-		fetch(APIRoute.testCases(params.projectID!)),
+		fetch(APIRoute.legacyTestCases(params.projectID!)),
 	])
 
 	if (!propertiesResponse.ok || !testCasesResponse.ok) {

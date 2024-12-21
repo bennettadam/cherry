@@ -39,21 +39,21 @@ class WorkspaceController(
         return ResponseEntity.ok("Success")
     }
 
-    @GetMapping("/projects/{projectID}/test-cases")
-    fun retrieveTestCases(@PathVariable projectID: UUID): ResponseEntity<Any> {
-        val testCases = workspaceService.retrieveTestCases(projectID)
+    @GetMapping("test-cases/{projectShortCode}")
+    fun retrieveTestCases(@PathVariable projectShortCode: String): ResponseEntity<Any> {
+        val testCases = workspaceService.retrieveTestCases(projectShortCode)
         return ResponseEntity.ok(FetchResponse(testCases))
     }
 
-    @PutMapping("/projects/{projectID}/test-cases")
-    fun updateTestCase(@PathVariable projectID: UUID, @RequestBody request: UpdateDTO<CreateTestCaseDTO>): ResponseEntity<Any> {
-        workspaceService.updateTestCase(request)
+    @PostMapping("/test-cases/{projectShortCode}")
+    fun createTestCase(@PathVariable projectShortCode: String, @RequestBody request: CreateTestCaseDTO): ResponseEntity<Any> {
+        workspaceService.createTestCase(projectShortCode, request)
         return ResponseEntity.ok("Success")
     }
 
-    @PostMapping("/projects/{projectID}/test-cases")
-    fun createTestCase(@PathVariable projectID: UUID, @RequestBody request: CreateTestCaseDTO): ResponseEntity<Any> {
-        workspaceService.createTestCase(projectID, request)
+    @PutMapping("/test-cases/{projectShortCode}")
+    fun updateTestCase(@PathVariable projectShortCode: String, @RequestBody request: UpdateDTO<CreateTestCaseDTO>): ResponseEntity<Any> {
+        workspaceService.updateTestCase(request)
         return ResponseEntity.ok("Success")
     }
 

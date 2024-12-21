@@ -1,10 +1,10 @@
 export class Route {
-	static viewTests(projectID: string) {
-		return `/${projectID}/tests`
+	static viewTestCases(projectShortCode: string) {
+		return `/test-cases/${projectShortCode}`
 	}
 
-	static viewTestCase(projectID: string, testCaseID: string) {
-		return `/${projectID}/${testCaseID}`
+	static viewTestCase(projectShortCode: string, testCaseNumber: number) {
+		return `/test-cases/${projectShortCode}/${testCaseNumber}`
 	}
 
 	static get viewProperties() {
@@ -28,13 +28,19 @@ export class Route {
 	}
 }
 
+export class RouteLoaderIDs {
+	static get projectTestCasesRoot() {
+		return 'routes/test-cases.$projectShortCode'
+	}
+}
+
 export class APIRoute {
 	static get projects() {
 		return 'http://localhost:8080/api/v1/workspace/projects'
 	}
 
-	static testCases(projectID: string) {
-		return `http://localhost:8080/api/v1/workspace/projects/${projectID}/test-cases`
+	static testCases(projectShortCode: string) {
+		return `http://localhost:8080/api/v1/workspace/test-cases/${projectShortCode}`
 	}
 
 	static get properties() {

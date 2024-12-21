@@ -128,7 +128,7 @@ export default function TestCaseRunDetails() {
 						{testCaseRun.title}
 					</h1>
 					<Link
-						to={Route.viewTestCase(
+						to={Route.legacyViewTestCase(
 							testCaseRun.testCase.projectID,
 							testCaseRun.testCase.testCaseID
 						)}

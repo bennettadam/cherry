@@ -39,8 +39,8 @@ class WorkspaceService(
     }
 
     @Transactional
-    fun retrieveTestCases(projectID: UUID): List<TestCaseDTO> {
-        val project = projectRepository.findByExternalID(projectID)
+    fun retrieveTestCases(projectShortCode: String): List<TestCaseDTO> {
+        val project = projectRepository.findByProjectShortCode(projectShortCode)
         requireNotNull(project) { "No project found" }
         val testCases = testCaseRepository.findByProject(project)
         return testCases.map { it.toDTO() }
@@ -60,10 +60,9 @@ class WorkspaceService(
         updateTestCasePropertyValues(testCase, updateDTO.data.propertyValues)
     }
 
-    // todo: how to roll back transaction if we throw an error?
     @Transactional
-    fun createTestCase(projectID: UUID, testCase: CreateTestCaseDTO) {
-        val project = projectRepository.findByExternalID(projectID)
+    fun createTestCase(projectShortCode: String, testCase: CreateTestCaseDTO) {
+        val project = projectRepository.findByProjectShortCode(projectShortCode)
         requireNotNull(project) { "No project found" }
 
         val testCaseNumber = testCaseRepository.countByProject(project) + 1 // index test case numbers starting at 1

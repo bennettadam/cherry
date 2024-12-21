@@ -1,16 +1,16 @@
 import { type LoaderFunctionArgs } from '@remix-run/node'
 import { useRouteLoaderData, useLoaderData, Link } from '@remix-run/react'
-import type { loader as projectLoader } from './$projectID'
-import { APIRoute, Route } from '../utility/Routes'
-import { FetchResponse, TestCase } from '../models/types'
+import type { loader as projectLoader } from '~/routes/test-cases.$projectShortCode'
+import { APIRoute, Route, RouteLoaderIDs } from '~/utility/Routes'
+import { FetchResponse, TestCase } from '~/models/types'
 
 export async function loader({ params }: LoaderFunctionArgs) {
-	const projectID = params.projectID
-	if (!projectID) {
+	const projectShortCode = params.projectShortCode
+	if (!projectShortCode) {
 		throw new Response('Project ID is required', { status: 400 })
 	}
 
-	const response = await fetch(APIRoute.testCases(projectID), {
+	const response = await fetch(APIRoute.testCases(projectShortCode), {
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
@@ -27,8 +27,9 @@ export async function loader({ params }: LoaderFunctionArgs) {
 }
 
 export default function TestCasesIndex() {
-	const routeData =
-		useRouteLoaderData<typeof projectLoader>('routes/$projectID')
+	const routeData = useRouteLoaderData<typeof projectLoader>(
+		RouteLoaderIDs.projectTestCasesRoot
+	)
 	const { testCases } = useLoaderData<typeof loader>()
 
 	if (!routeData?.project) {
@@ -57,8 +58,8 @@ export default function TestCasesIndex() {
 						<li key={testCase.testCaseID}>
 							<Link
 								to={Route.viewTestCase(
-									testCase.projectID,
-									testCase.testCaseID
+									routeData.project.projectShortCode,
+									testCase.testCaseNumber
 								)}
 								className="block p-4 hover:bg-gray-50"
 							>

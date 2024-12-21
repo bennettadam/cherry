@@ -98,3 +98,9 @@ export interface UpdateTestRun {
 	description?: string
 	status: TestRunStatus
 }
+
+export interface ProjectTestCaseOutletContext {
+	testCase: TestCase
+	properties: PropertyConfiguration[]
+	propertyValues: PropertyValue[]
+}
