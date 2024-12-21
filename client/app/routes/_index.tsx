@@ -81,7 +81,9 @@ export default function Projects() {
 							{data.map((project) => (
 								<li key={project.projectID}>
 									<Link
-										to={Route.viewTestCases(project.projectShortCode)}
+										to={Route.viewProjectTestCases(
+											project.projectShortCode
+										)}
 										className="block p-4 transition-colors hover:bg-gray-50"
 									>
 										<div className="flex justify-between">

@@ -1,3 +1,5 @@
+import { Project } from './project'
+
 export interface TestCase {
 	testCaseID: string
 	projectID: string
@@ -71,6 +73,7 @@ export enum TestRunStatus {
 export interface TestRun {
 	testRunID: string
 	creationDate: number
+	testRunNumber: number
 	status: TestRunStatus
 	title: string
 	description?: string
@@ -93,14 +96,31 @@ export interface TestCaseRun {
 	testInstructions?: string
 }
 
-export interface UpdateTestRun {
+export interface UpdateTestRun extends Record<string, any> {
 	title: string
 	description?: string
 	status: TestRunStatus
 }
 
-export interface ProjectTestCaseOutletContext {
+export interface ProjectTestCasesOutletContext {
+	project: Project
+	testCases: TestCase[]
+	properties: PropertyConfiguration[]
+}
+
+export interface TestCaseOutletContext {
 	testCase: TestCase
 	properties: PropertyConfiguration[]
 	propertyValues: PropertyValue[]
+}
+
+export interface ProjectTestRunsOutletContext {
+	project: Project
+	testRuns: TestRun[]
+}
+
+export interface ProjectTestCaseRunsOutletContext {
+	project: Project
+	testRun: TestRun
+	testCaseRuns: TestCaseRun[]
 }

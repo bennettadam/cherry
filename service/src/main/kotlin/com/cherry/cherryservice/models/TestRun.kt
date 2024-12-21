@@ -29,6 +29,9 @@ class TestRun (
     @JoinColumn(name = "project_id")
     val project: WorkspaceProject,
 
+    @Column(name = "test_run_number")
+    val testRunNumber: Long,
+
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     var status: TestRunStatus,
@@ -40,6 +43,6 @@ class TestRun (
     var description: String?,
 ) {
     fun toDTO(): TestRunDTO {
-        return TestRunDTO(externalID, creationDate, status, title, description)
+        return TestRunDTO(externalID, creationDate, testRunNumber, status, title, description)
     }
 }

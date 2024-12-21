@@ -1,4 +1,5 @@
 import { PropertyConfiguration, TestCase, PropertyValue } from '~/models/types'
+import { Project } from '../models/project'
 
 export class Tools {
 	static mapTestCaseProperties(
@@ -13,5 +14,9 @@ export class Tools {
 				],
 			}
 		})
+	}
+
+	static testCaseDisplayCode(project: Project, testCase: TestCase) {
+		return `${project.projectShortCode}-${testCase.testCaseNumber}`
 	}
 }

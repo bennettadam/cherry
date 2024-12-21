@@ -1,99 +1,23 @@
-import {
-	json,
-	type LoaderFunctionArgs,
-	type ActionFunctionArgs,
-	redirect,
-} from '@remix-run/node'
-import {
-	useLoaderData,
-	useRouteLoaderData,
-	useParams,
-	useNavigate,
-	useSubmit,
-} from '@remix-run/react'
+import { type ActionFunctionArgs, redirect } from '@remix-run/node'
+import { useNavigate, useSubmit, useOutletContext } from '@remix-run/react'
 import { Route, APIRoute } from '~/utility/Routes'
-import { TestRun, TestRunStatus } from '~/models/types'
-import type {
-	FetchResponse,
-	TestCaseRun,
-	UpdateRequestBody,
-	UpdateTestRun,
-} from '~/models/types'
-import { loader as testRunsLoader } from '~/routes/$projectID.test-runs._index'
-import { useState } from 'react'
+import { ProjectTestCaseRunsOutletContext, TestRunStatus } from '~/models/types'
+import type { UpdateTestRun } from '~/models/types'
 import { ActionMenu, type ActionMenuItem } from '~/components/ActionMenu'
 import { TestRunStatusBadge } from '~/components/TestRunStatusBadge'
 import { TestCaseRunStatusBadge } from '~/components/TestCaseRunStatusBadge'
 
-export async function loader({ params }: LoaderFunctionArgs) {
-	if (!params.projectID || !params.testRunID) {
-		throw new Response('Project ID and Test Run ID are required', {
-			status: 400,
-		})
-	}
-
-	// Fetch test case runs
-	const testCaseRunsResponse = await fetch(
-		APIRoute.testCaseRuns(params.testRunID),
-		{
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		}
-	)
-
-	if (!testCaseRunsResponse.ok) {
-		throw new Response('Failed to fetch test case runs', { status: 500 })
-	}
-
-	// Fetch test runs for the project
-	const testRunsResponse = await fetch(APIRoute.testRuns(params.projectID), {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-	})
-
-	if (!testRunsResponse.ok) {
-		throw new Response('Failed to fetch test runs', { status: 500 })
-	}
-
-	const testCaseRunsData =
-		(await testCaseRunsResponse.json()) as FetchResponse<TestCaseRun[]>
-	const testRunsData = (await testRunsResponse.json()) as FetchResponse<
-		TestRun[]
-	>
-
-	const testRun = testRunsData.data.find(
-		(testRun) => testRun.testRunID === params.testRunID
-	)
-
-	if (!testRun) {
-		throw new Response('Test run not found', { status: 404 })
-	}
-
-	return {
-		testCaseRuns: testCaseRunsData.data,
-		testRun,
-		projectID: params.projectID,
-	}
-}
-
 export async function action({ request, params }: ActionFunctionArgs) {
-	const projectID = params.projectID
-	const testRunID = params.testRunID
-	if (!projectID) {
-		throw new Response('Project ID is required', { status: 400 })
-	}
-	if (!testRunID) {
-		throw new Response('Test Run ID is required', { status: 400 })
+	const projectShortCode = params.projectShortCode
+	if (!projectShortCode) {
+		throw new Response('Project short code is required', { status: 400 })
 	}
 
-	const { intent, testRunUpdate } = await request.json()
+	const requestJSON = await request.json()
 
-	if (intent === 'abort') {
-		const response = await fetch(APIRoute.testRunByID(testRunID), {
+	if (requestJSON.intent === 'abort') {
+		const { testRunUpdate, testRunID } = requestJSON
+		const response = await fetch(APIRoute.testRun(testRunID), {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
@@ -105,11 +29,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			throw new Response('Failed to abort test run', { status: 500 })
 		}
 
-		return redirect(Route.viewTestRuns(projectID))
+		return redirect(Route.viewProjectTestRuns(projectShortCode))
 	}
 
-	if (intent === 'delete') {
-		const response = await fetch(APIRoute.testRunByID(testRunID), {
+	if (requestJSON.intent === 'delete') {
+		const { testRunID } = requestJSON
+		const response = await fetch(APIRoute.testRun(testRunID), {
 			method: 'DELETE',
 			headers: {
 				'Content-Type': 'application/json',
@@ -120,14 +45,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			throw new Response('Failed to delete test run', { status: 500 })
 		}
 
-		return redirect(Route.viewTestRuns(projectID))
+		return redirect(Route.viewProjectTestRuns(projectShortCode))
 	}
 
 	throw new Response('Invalid request', { status: 400 })
 }
 
 export default function TestRunDetails() {
-	const { testCaseRuns, testRun, projectID } = useLoaderData<typeof loader>()
+	const { project, testRun, testCaseRuns } =
+		useOutletContext<ProjectTestCaseRunsOutletContext>()
+
 	const navigate = useNavigate()
 	const submit = useSubmit()
 
@@ -141,7 +68,7 @@ export default function TestRunDetails() {
 					)
 				) {
 					submit(
-						{ intent: 'delete' },
+						{ intent: 'delete', testRunID: testRun.testRunID },
 						{
 							method: 'POST',
 							encType: 'application/json',
@@ -155,7 +82,7 @@ export default function TestRunDetails() {
 		const editItem: ActionMenuItem = {
 			label: 'Edit test run',
 			action: () => {
-				navigate(Route.editTestRun(projectID, testRun.testRunID))
+				navigate('edit')
 			},
 		}
 
@@ -166,17 +93,18 @@ export default function TestRunDetails() {
 					{
 						label: 'Abort test run',
 						action: () => {
-							const testRunUpdate: UpdateRequestBody<UpdateTestRun> = {
-								id: testRun.testRunID,
-								data: {
-									title: testRun.title,
-									description: testRun.description,
-									status: TestRunStatus.abort,
-								},
+							const testRunUpdate: UpdateTestRun = {
+								title: testRun.title,
+								description: testRun.description,
+								status: TestRunStatus.abort,
 							}
 
 							submit(
-								{ intent: 'abort', testRunUpdate },
+								{
+									intent: 'abort',
+									testRunUpdate,
+									testRunID: testRun.testRunID,
+								},
 								{
 									method: 'POST',
 									encType: 'application/json',
@@ -192,17 +120,18 @@ export default function TestRunDetails() {
 					{
 						label: 'Resume test run',
 						action: () => {
-							const testRunUpdate: UpdateRequestBody<UpdateTestRun> = {
-								id: testRun.testRunID,
-								data: {
-									title: testRun.title,
-									description: testRun.description,
-									status: TestRunStatus.pending,
-								},
+							const testRunUpdate: UpdateTestRun = {
+								title: testRun.title,
+								description: testRun.description,
+								status: TestRunStatus.pending,
 							}
 
 							submit(
-								{ intent: 'abort', testRunUpdate },
+								{
+									intent: 'abort',
+									testRunUpdate,
+									testRunID: testRun.testRunID,
+								},
 								{
 									method: 'POST',
 									encType: 'application/json',
@@ -268,8 +197,10 @@ export default function TestRunDetails() {
 				<tbody className="bg-white divide-y divide-gray-200">
 					{testCaseRuns.map((testCaseRun) => (
 						<tr
+							onClick={() =>
+								navigate(testCaseRun.testCase.testCaseNumber.toString())
+							}
 							key={testCaseRun.testCaseRunID}
-							onClick={() => navigate(testCaseRun.testCaseRunID)}
 							className="cursor-pointer hover:bg-gray-50"
 						>
 							<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">

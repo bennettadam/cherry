@@ -1,40 +1,14 @@
-import { json, type LoaderFunctionArgs } from '@remix-run/node'
-import { useLoaderData, Link, useNavigate, useParams } from '@remix-run/react'
-import { APIRoute, Route } from '~/utility/Routes'
-import { TestRun, TestRunStatus } from '~/models/types'
-import type { FetchResponse } from '~/models/types'
+import { Link, useOutletContext } from '@remix-run/react'
+import { ProjectTestRunsOutletContext, TestRun } from '~/models/types'
 import { TestRunStatusBadge } from '~/components/TestRunStatusBadge'
-
-export async function loader({ params }: LoaderFunctionArgs) {
-	if (!params.projectID) {
-		throw new Response('Project ID is required', { status: 400 })
-	}
-
-	const response = await fetch(APIRoute.testRuns(params.projectID), {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-	})
-
-	if (!response.ok) {
-		throw new Response('Failed to fetch test runs', { status: 500 })
-	}
-
-	const data = (await response.json()) as FetchResponse<TestRun[]>
-	return { testRuns: data.data }
-}
+import { Route } from '../utility/Routes'
 
 export default function TestRunsIndex() {
-	const { testRuns } = useLoaderData<typeof loader>()
-	const { projectID } = useParams()
-
-	if (!projectID) {
-		return <div>Project ID is required</div>
-	}
+	const { project, testRuns } =
+		useOutletContext<ProjectTestRunsOutletContext>()
 
 	return (
-		<div className="p-6">
+		<div>
 			<div className="mb-6 flex justify-between items-center">
 				<div>
 					<h1 className="text-2xl font-semibold text-gray-900">
@@ -46,7 +20,7 @@ export default function TestRunsIndex() {
 				</div>
 
 				<Link
-					to={Route.newTestRun(projectID)}
+					to="new"
 					className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
 				>
 					Create Test Run
@@ -78,7 +52,10 @@ export default function TestRunsIndex() {
 							<tr key={testRun.testRunID}>
 								<td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
 									<Link
-										to={`${testRun.testRunID}`}
+										to={Route.viewTestRun(
+											project.projectShortCode,
+											testRun.testRunNumber
+										)}
 										className="text-blue-600 hover:text-blue-800 hover:underline"
 									>
 										{testRun.title}

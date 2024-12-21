@@ -1,8 +1,11 @@
 import { type LoaderFunctionArgs } from '@remix-run/node'
-import { useRouteLoaderData, useLoaderData, Link } from '@remix-run/react'
-import type { loader as projectLoader } from '~/routes/test-cases.$projectShortCode'
-import { APIRoute, Route, RouteLoaderIDs } from '~/utility/Routes'
-import { FetchResponse, TestCase } from '~/models/types'
+import { Link, useOutletContext } from '@remix-run/react'
+import { APIRoute } from '~/utility/Routes'
+import {
+	FetchResponse,
+	ProjectTestCasesOutletContext,
+	TestCase,
+} from '~/models/types'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	const projectShortCode = params.projectShortCode
@@ -10,7 +13,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 		throw new Response('Project ID is required', { status: 400 })
 	}
 
-	const response = await fetch(APIRoute.testCases(projectShortCode), {
+	const response = await fetch(APIRoute.projectTestCases(projectShortCode), {
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
@@ -27,14 +30,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 }
 
 export default function TestCasesIndex() {
-	const routeData = useRouteLoaderData<typeof projectLoader>(
-		RouteLoaderIDs.projectTestCasesRoot
-	)
-	const { testCases } = useLoaderData<typeof loader>()
-
-	if (!routeData?.project) {
-		return <p>No project found</p>
-	}
+	const { testCases } = useOutletContext<ProjectTestCasesOutletContext>()
 
 	return (
 		<div>
@@ -57,10 +53,7 @@ export default function TestCasesIndex() {
 					{testCases.map((testCase) => (
 						<li key={testCase.testCaseID}>
 							<Link
-								to={Route.viewTestCase(
-									routeData.project.projectShortCode,
-									testCase.testCaseNumber
-								)}
+								to={testCase.testCaseNumber.toString()}
 								className="block p-4 hover:bg-gray-50"
 							>
 								<div className="flex items-start justify-between">

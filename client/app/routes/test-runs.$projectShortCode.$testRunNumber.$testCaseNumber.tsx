@@ -1,72 +1,25 @@
-import {
-	json,
-	type LoaderFunctionArgs,
-	type ActionFunctionArgs,
-} from '@remix-run/node'
-import { useLoaderData, Link, useFetcher } from '@remix-run/react'
+import { type ActionFunctionArgs } from '@remix-run/node'
+import { Link, useFetcher, useOutletContext, useParams } from '@remix-run/react'
 import { APIRoute, Route } from '~/utility/Routes'
 import {
-	FetchResponse,
-	TestCaseRun,
+	ProjectTestCaseRunsOutletContext,
 	TestCaseRunStatus,
-	UpdateRequestBody,
 } from '~/models/types'
 import { useState } from 'react'
+import { Tools } from '../utility/Tools'
 
 interface UpdateTestCaseRun extends Record<string, any> {
 	status: TestCaseRunStatus
 }
 
-export async function loader({ params }: LoaderFunctionArgs) {
-	if (!params.projectID || !params.testRunID || !params.testCaseID) {
-		throw new Response(
-			'Project ID, Test Run ID, and Test Case ID are required',
-			{
-				status: 400,
-			}
-		)
-	}
-
-	const response = await fetch(APIRoute.testCaseRuns(params.testRunID), {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-	})
-
-	if (!response.ok) {
-		throw new Response('Failed to fetch test case runs', {
-			status: 500,
-		})
-	}
-
-	const data = (await response.json()) as FetchResponse<TestCaseRun[]>
-	const testCaseRun = data.data.find(
-		(run) => run.testCaseRunID === params.testCaseID
-	)
-
-	if (!testCaseRun) {
-		throw new Response('Test case run not found', { status: 404 })
-	}
-
-	return { testCaseRun }
-}
-
-export async function action({ request, params }: ActionFunctionArgs) {
-	const { testRunID, testCaseID } = params
-
-	if (!testRunID || !testCaseID) {
-		throw new Response('Test Run ID and Test Case ID are required', {
-			status: 400,
-		})
-	}
-
-	const response = await fetch(APIRoute.testCaseRuns(testRunID), {
+export async function action({ request }: ActionFunctionArgs) {
+	const { testCaseRunID, testCaseRunUpdate } = await request.json()
+	const response = await fetch(APIRoute.testCaseRun(testCaseRunID), {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: await request.text(),
+		body: JSON.stringify(testCaseRunUpdate),
 	})
 
 	if (!response.ok) {
@@ -79,7 +32,21 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function TestCaseRunDetails() {
-	const { testCaseRun } = useLoaderData<typeof loader>()
+	const params = useParams()
+	const testCaseNumber = Number(params.testCaseNumber)
+	if (!testCaseNumber) {
+		return <p>Test case number is required</p>
+	}
+
+	const { project, testCaseRuns } =
+		useOutletContext<ProjectTestCaseRunsOutletContext>()
+	const testCaseRun = testCaseRuns.find(
+		(run) => run.testCase.testCaseNumber === testCaseNumber
+	)
+	if (!testCaseRun) {
+		return <p>Test case run not found</p>
+	}
+
 	const fetcher = useFetcher()
 	const [selectedStatus, setSelectedStatus] = useState<TestCaseRunStatus>(
 		testCaseRun.status
@@ -88,15 +55,20 @@ export default function TestCaseRunDetails() {
 	const handleStatusUpdate = (status: TestCaseRunStatus) => {
 		setSelectedStatus(status)
 
-		const updateBody: UpdateRequestBody<UpdateTestCaseRun> = {
-			id: testCaseRun.testCaseRunID,
-			data: { status },
+		const testCaseRunUpdate: UpdateTestCaseRun = {
+			status,
 		}
 
-		fetcher.submit(updateBody, {
-			method: 'post',
-			encType: 'application/json',
-		})
+		fetcher.submit(
+			{
+				testCaseRunID: testCaseRun.testCaseRunID,
+				testCaseRunUpdate,
+			},
+			{
+				method: 'post',
+				encType: 'application/json',
+			}
+		)
 	}
 
 	return (
@@ -128,13 +100,14 @@ export default function TestCaseRunDetails() {
 						{testCaseRun.title}
 					</h1>
 					<Link
-						to={Route.legacyViewTestCase(
-							testCaseRun.testCase.projectID,
-							testCaseRun.testCase.testCaseID
+						to={Route.viewTestCase(
+							project.projectShortCode,
+							testCaseRun.testCase.testCaseNumber
 						)}
 						className="text-sm text-gray-600 hover:text-gray-900 hover:underline"
 					>
-						View Original Test Case
+						View{' '}
+						{Tools.testCaseDisplayCode(project, testCaseRun.testCase)}
 					</Link>
 				</div>
 				<p className="mt-2 text-gray-600">Test Case Run Details</p>

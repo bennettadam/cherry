@@ -1,15 +1,22 @@
 import { NavLink } from '@remix-run/react'
+import { Route } from '~/utility/Routes'
 
-interface SidebarProps {
+interface ProjectSidebarProps {
+	projectShortCode: string
 	title: string
 	description?: string
-	items: Array<{
-		to: string
-		label: string
-	}>
 }
 
-export default function Sidebar({ title, description, items }: SidebarProps) {
+export default function ProjectSidebar({
+	projectShortCode,
+	title,
+	description,
+}: ProjectSidebarProps) {
+	const items = [
+		{ to: Route.viewProjectTestCases(projectShortCode), label: 'Test Cases' },
+		{ to: Route.viewProjectTestRuns(projectShortCode), label: 'Test Runs' },
+	]
+
 	return (
 		<div className="w-64 border-r border-gray-200 bg-white">
 			<div className="p-4">

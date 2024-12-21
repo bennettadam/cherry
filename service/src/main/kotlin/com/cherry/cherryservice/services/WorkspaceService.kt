@@ -47,17 +47,17 @@ class WorkspaceService(
     }
 
     @Transactional
-    fun updateTestCase(updateDTO: UpdateDTO<CreateTestCaseDTO>) {
-        val testCase = testCaseRepository.findByExternalID(updateDTO.id)
-        requireNotNull(testCase) { "No test case found" }
-        testCase.title = updateDTO.data.title
-        testCase.description = updateDTO.data.description
-        testCase.testInstructions = updateDTO.data.testInstructions
+    fun updateTestCase(testCaseID: UUID, updateDTO: CreateTestCaseDTO) {
+        val testCase = testCaseRepository.findByExternalID(testCaseID)
+        requireNotNull(testCase) { "No test case found with id $testCaseID" }
+        testCase.title = updateDTO.title
+        testCase.description = updateDTO.description
+        testCase.testInstructions = updateDTO.testInstructions
         testCaseRepository.save(testCase)
 
         // wipe property values and recreate from update request
         testCasePropertyValueRepository.deleteAll(testCase.propertyValues)
-        updateTestCasePropertyValues(testCase, updateDTO.data.propertyValues)
+        updateTestCasePropertyValues(testCase, updateDTO.propertyValues)
     }
 
     @Transactional
@@ -196,28 +196,34 @@ class WorkspaceService(
         propertyConfigurationRepository.deleteByExternalID(propertyConfigurationID)
     }
 
-    fun retrieveTestRuns(projectID: UUID): List<TestRunDTO> {
-        val project = projectRepository.findByExternalID(projectID)
-        requireNotNull(project) { "No project found for id $projectID" }
+    fun retrieveTestRuns(projectShortCode: String): List<TestRunDTO> {
+        val project = projectRepository.findByProjectShortCode(projectShortCode)
+        requireNotNull(project) { "No project found for id $projectShortCode" }
         val testRuns = testRunRepository.findAllByProject(project)
         return testRuns.map { it.toDTO() }
     }
 
     @Transactional
-    fun retrieveTestCaseRuns(testRunID: UUID): List<TestCaseRunDTO> {
-        val testRun = testRunRepository.findByExternalID(testRunID)
-        requireNotNull(testRun) { "No test run found for id $testRunID" }
+    fun retrieveTestCaseRuns(projectShortCode: String, testRunNumber: Long): List<TestCaseRunDTO> {
+        val project = projectRepository.findByProjectShortCode(projectShortCode)
+        requireNotNull(project) { "No project found for id $projectShortCode" }
+
+        val testRun = testRunRepository.findByProjectAndTestRunNumber(project, testRunNumber)
+        requireNotNull(testRun) { "No test run found with test run number $testRunNumber" }
         val testCaseRuns = testCaseRunRepository.findAllByTestRun(testRun)
         return testCaseRuns.map { it.toDTO() }
     }
 
     @Transactional
-    fun createTestRun(projectID: UUID, testRun: CreateTestRunDTO) {
-        val project = projectRepository.findByExternalID(projectID)
-        requireNotNull(project) { "No project found for id $projectID" }
+    fun createTestRun(projectShortCode: String, testRun: CreateTestRunDTO) {
+        val project = projectRepository.findByProjectShortCode(projectShortCode)
+        requireNotNull(project) { "No project found for id $projectShortCode" }
 
+        // find the test run with the largest test run number and bump it up by 1
+        val largestTestRunNumber = testRunRepository.findTopByProjectOrderByTestRunNumberDesc(project)?.testRunNumber ?: 0
         val newTestRun = TestRun(
             project = project,
+            testRunNumber = largestTestRunNumber + 1,
             status = TestRunStatus.PENDING,
             title = testRun.title,
             description = testRun.description
@@ -240,13 +246,13 @@ class WorkspaceService(
     }
 
     @Transactional
-    fun updateTestRun(testRunID: UUID, updateDTO: UpdateDTO<UpdateTestRunDTO>) {
+    fun updateTestRun(testRunID: UUID, updateDTO: UpdateTestRunDTO) {
         val testRun = testRunRepository.findByExternalID(testRunID)
         requireNotNull(testRun) { "No test run found for id $testRunID" }
 
-        testRun.title = updateDTO.data.title
-        testRun.description = updateDTO.data.description
-        testRun.status = updateDTO.data.status
+        testRun.title = updateDTO.title
+        testRun.description = updateDTO.description
+        testRun.status = updateDTO.status
 
         testRunRepository.save(testRun)
     }
@@ -264,12 +270,11 @@ class WorkspaceService(
     }
 
     @Transactional
-    fun updateTestCaseRun(testRunID: UUID, updateDTO: UpdateDTO<UpdateTestCaseRunDTO>) {
-        val testCaseRun = testCaseRunRepository.findByExternalID(updateDTO.id)
-        requireNotNull(testCaseRun) { "No test case found for id ${updateDTO.id}" }
-        require(testCaseRun.testRun.externalID == testRunID) { "Test run id of test case does not match request test run id $testRunID" }
+    fun updateTestCaseRun(testCaseRunID: UUID, updateDTO: UpdateTestCaseRunDTO) {
+        val testCaseRun = testCaseRunRepository.findByExternalID(testCaseRunID)
+        requireNotNull(testCaseRun) { "No test case found for id $testCaseRunID" }
 
-        testCaseRun.status = updateDTO.data.status
+        testCaseRun.status = updateDTO.status
         testCaseRunRepository.save(testCaseRun)
 
         val testRun = testCaseRun.testRun
@@ -284,5 +289,10 @@ class WorkspaceService(
             testRun.status = TestRunStatus.IN_PROGRESS
             testRunRepository.save(testRun)
         }
+    }
+
+    @Transactional
+    fun deleteTestCaseRun(testCaseRunID: UUID) {
+        testCaseRunRepository.deleteByExternalID(testCaseRunID)
     }
 }

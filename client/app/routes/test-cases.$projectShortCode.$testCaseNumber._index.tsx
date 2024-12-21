@@ -1,9 +1,12 @@
 import { Link, useOutletContext } from '@remix-run/react'
-import { ProjectTestCaseOutletContext } from '~/models/types'
+import {
+	ProjectTestCasesOutletContext,
+	TestCaseOutletContext,
+} from '~/models/types'
 
 export default function TestCaseDetails() {
 	const { testCase, propertyValues } =
-		useOutletContext<ProjectTestCaseOutletContext>()
+		useOutletContext<TestCaseOutletContext>()
 
 	return (
 		<div>

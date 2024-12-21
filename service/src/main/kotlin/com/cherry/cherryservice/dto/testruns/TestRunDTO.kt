@@ -6,6 +6,7 @@ import java.util.UUID
 data class TestRunDTO(
     val testRunID: UUID,
     val creationDate: Date,
+    val testRunNumber: Long,
     val status: TestRunStatus,
     val title: String,
     val description: String?

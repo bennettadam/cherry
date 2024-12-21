@@ -107,6 +107,7 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
                             creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             modify_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             project_id BIGINT REFERENCES workspace_projects(id),
+                            test_run_number BIGINT NOT NULL,
                             status TEXT NOT NULL,
                             title TEXT NOT NULL,
                             description TEXT

@@ -9,4 +9,8 @@ interface TestRunRepository : JpaRepository<TestRun, Long> {
     fun findByExternalID(externalID: UUID): TestRun?
 
     fun findAllByProject(project: WorkspaceProject): List<TestRun>
+
+    fun findTopByProjectOrderByTestRunNumberDesc(project: WorkspaceProject): TestRun?
+
+    fun findByProjectAndTestRunNumber(project: WorkspaceProject, testRunNumber: Long): TestRun?
 }

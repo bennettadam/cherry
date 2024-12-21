@@ -4,8 +4,8 @@ import { APIRoute, Route } from '~/utility/Routes'
 import { TestCaseForm, TestCaseFormMode } from '~/components/TestCaseForm'
 import {
 	CreateTestCase,
-	ProjectTestCaseOutletContext,
-	UpdateRequestBody,
+	ProjectTestCasesOutletContext,
+	TestCaseOutletContext,
 } from '~/models/types'
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -18,12 +18,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		throw new Response('Test case number is required', { status: 400 })
 	}
 
-	const response = await fetch(APIRoute.testCases(projectShortCode), {
+	const { testCaseID, testCaseUpdate } = await request.json()
+	const response = await fetch(APIRoute.testCase(testCaseID), {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: await request.text(),
+		body: JSON.stringify(testCaseUpdate),
 	})
 
 	if (!response.ok) {
@@ -39,19 +40,19 @@ export default function EditTestCase() {
 	const navigate = useNavigate()
 	const submit = useSubmit()
 
-	const { testCase, properties } =
-		useOutletContext<ProjectTestCaseOutletContext>()
+	const { testCase, properties } = useOutletContext<TestCaseOutletContext>()
 
 	function handleSubmit(testCaseUpdate: CreateTestCase) {
-		const updateBody: UpdateRequestBody<CreateTestCase> = {
-			id: testCase.testCaseID,
-			data: testCaseUpdate,
-		}
-
-		submit(updateBody, {
-			method: 'POST',
-			encType: 'application/json',
-		})
+		submit(
+			{
+				testCaseID: testCase.testCaseID,
+				testCaseUpdate,
+			},
+			{
+				method: 'POST',
+				encType: 'application/json',
+			}
+		)
 	}
 
 	return (
@@ -66,14 +67,7 @@ export default function EditTestCase() {
 				properties={properties}
 				defaultValues={testCase}
 				mode={TestCaseFormMode.edit}
-				onCancel={() =>
-					navigate(
-						Route.legacyViewTestCase(
-							testCase.projectID,
-							testCase.testCaseID
-						)
-					)
-				}
+				onCancel={() => navigate('..')}
 				onSubmit={handleSubmit}
 			/>
 		</div>

@@ -4,69 +4,52 @@ import {
 	type ActionFunctionArgs,
 	redirect,
 } from '@remix-run/node'
-import { Form, useLoaderData, useNavigate, useSubmit } from '@remix-run/react'
+import {
+	Form,
+	useLoaderData,
+	useNavigate,
+	useOutletContext,
+	useSubmit,
+} from '@remix-run/react'
 import { Route, APIRoute } from '~/utility/Routes'
-import type { TestRun, UpdateTestRun } from '~/models/types'
+import type {
+	ProjectTestCaseRunsOutletContext,
+	TestRun,
+	UpdateTestRun,
+} from '~/models/types'
 import type { FetchResponse, UpdateRequestBody } from '~/models/types'
 import { useState } from 'react'
 
-export async function loader({ params }: LoaderFunctionArgs) {
-	if (!params.projectID || !params.testRunID) {
-		throw new Response('Project ID and Test Run ID are required', {
-			status: 400,
-		})
-	}
-
-	const response = await fetch(APIRoute.testRuns(params.projectID), {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-	})
-
-	if (!response.ok) {
-		throw new Response('Failed to fetch test run', { status: 500 })
-	}
-
-	const data = (await response.json()) as FetchResponse<TestRun[]>
-	const testRun = data.data.find(
-		(testRun) => testRun.testRunID === params.testRunID
-	)
-
-	if (!testRun) {
-		throw new Response('Test run not found', { status: 404 })
-	}
-
-	return { testRun, projectID: params.projectID }
-}
-
 export async function action({ request, params }: ActionFunctionArgs) {
-	const projectID = params.projectID
-	const testRunID = params.testRunID
-	if (!projectID) {
-		throw new Response('Project ID is required', { status: 400 })
+	const projectShortCode = params.projectShortCode
+	const testRunNumber = Number(params.testRunNumber)
+	if (!projectShortCode) {
+		throw new Response('Project short code is required', { status: 400 })
 	}
-	if (!testRunID) {
-		throw new Response('Test run ID is required', { status: 400 })
+	if (!testRunNumber) {
+		throw new Response('Test run number is required', { status: 400 })
 	}
 
-	const response = await fetch(APIRoute.testRunByID(testRunID), {
+	const { testRunID, testRunUpdate } = await request.json()
+	const response = await fetch(APIRoute.testRun(testRunID), {
 		method: 'PUT',
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: await request.text(),
+		body: JSON.stringify(testRunUpdate),
 	})
 
 	if (!response.ok) {
 		throw new Response('Failed to update test run', { status: 500 })
 	}
 
-	return redirect(Route.viewTestRun(projectID, testRunID))
+	return redirect(Route.viewTestRun(projectShortCode, testRunNumber))
 }
 
 export default function EditTestRun() {
-	const { testRun, projectID } = useLoaderData<typeof loader>()
+	const { project, testRun } =
+		useOutletContext<ProjectTestCaseRunsOutletContext>()
+
 	const navigate = useNavigate()
 	const submit = useSubmit()
 	const [error, setError] = useState<string>()
@@ -82,19 +65,22 @@ export default function EditTestRun() {
 			return
 		}
 
-		const testRunUpdate: UpdateRequestBody<UpdateTestRun> = {
-			id: testRun.testRunID,
-			data: {
-				title: title.toString(),
-				description: description?.toString(),
-				status: testRun.status,
-			},
+		const testRunUpdate: UpdateTestRun = {
+			title: title.toString(),
+			description: description?.toString(),
+			status: testRun.status,
 		}
 
-		submit(testRunUpdate, {
-			method: 'post',
-			encType: 'application/json',
-		})
+		submit(
+			{
+				testRunID: testRun.testRunID,
+				testRunUpdate,
+			},
+			{
+				method: 'post',
+				encType: 'application/json',
+			}
+		)
 	}
 
 	return (
@@ -154,9 +140,7 @@ export default function EditTestRun() {
 				<div className="flex justify-end gap-3">
 					<button
 						type="button"
-						onClick={() =>
-							navigate(Route.viewTestRun(projectID, testRun.testRunID))
-						}
+						onClick={() => navigate('..')}
 						className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
 					>
 						Cancel

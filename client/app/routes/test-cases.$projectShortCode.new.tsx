@@ -38,7 +38,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		throw new Response('Project short code is required', { status: 400 })
 	}
 
-	const response = await fetch(APIRoute.testCases(projectShortCode), {
+	const response = await fetch(APIRoute.projectTestCases(projectShortCode), {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -52,7 +52,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		})
 	}
 
-	return redirect(Route.viewTestCases(projectShortCode))
+	return redirect(Route.viewProjectTestCases(projectShortCode))
 }
 
 export default function NewTestCase() {

@@ -23,13 +23,21 @@ interface CreateTestRun extends Record<string, any> {
 }
 
 export async function loader({ params }: ActionFunctionArgs) {
+	const projectShortCode = params.projectShortCode
+	if (!projectShortCode) {
+		throw new Response('Project short code is required', { status: 400 })
+	}
+
 	const [propertiesResponse, testCasesResponse] = await Promise.all([
 		fetch(APIRoute.properties),
-		fetch(APIRoute.legacyTestCases(params.projectID!)),
+		fetch(APIRoute.projectTestCases(projectShortCode)),
 	])
 
-	if (!propertiesResponse.ok || !testCasesResponse.ok) {
+	if (!propertiesResponse.ok) {
 		throw new Response('Failed to fetch data', { status: 500 })
+	}
+	if (!testCasesResponse.ok) {
+		throw new Response('Failed to fetch test cases', { status: 500 })
 	}
 
 	const properties = (await propertiesResponse.json()) as FetchResponse<
@@ -39,15 +47,16 @@ export async function loader({ params }: ActionFunctionArgs) {
 		TestCase[]
 	>
 
-	return json({ properties: properties.data, testCases: testCases.data })
+	return { properties: properties.data, testCases: testCases.data }
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-	if (!params.projectID) {
-		throw new Response('Project ID is required', { status: 400 })
+	const projectShortCode = params.projectShortCode
+	if (!projectShortCode) {
+		throw new Response('Project short code is required', { status: 400 })
 	}
 
-	const response = await fetch(APIRoute.testRuns(params.projectID), {
+	const response = await fetch(APIRoute.projectTestRuns(projectShortCode), {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
@@ -59,7 +68,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		throw new Response('Failed to create test run', { status: 500 })
 	}
 
-	return redirect(Route.viewTestRuns(params.projectID))
+	return redirect(Route.viewProjectTestRuns(projectShortCode))
 }
 
 export default function NewTestRun() {
