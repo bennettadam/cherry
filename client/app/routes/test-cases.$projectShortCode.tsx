@@ -1,6 +1,6 @@
-import { json, type LoaderFunctionArgs } from '@remix-run/node'
+import { type LoaderFunctionArgs } from '@remix-run/node'
 import { useLoaderData, Outlet } from '@remix-run/react'
-import ProjectSidebar from '~/components/Sidebar'
+import ProjectSidebar from '~/components/ProjectSidebar'
 import {
 	FetchResponse,
 	ProjectTestCasesOutletContext,
@@ -85,7 +85,7 @@ export default function ProjectLayout() {
 		<div className="flex">
 			<ProjectSidebar
 				projectShortCode={project.projectShortCode}
-				title={project.name}
+				title={project.title}
 				description={project.description}
 			/>
 			<div className="flex-1 overflow-auto p-6">

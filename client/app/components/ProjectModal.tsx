@@ -49,7 +49,7 @@ export default function ProjectModal({
 						event.preventDefault()
 						const formData = new FormData(event.currentTarget)
 						onSubmit({
-							name: formData.get('name') as string,
+							title: formData.get('title') as string,
 							projectShortCode: formData.get('shortCode') as string,
 							description: formData.get('description') as
 								| string
@@ -60,15 +60,15 @@ export default function ProjectModal({
 					<div className="space-y-4">
 						<div>
 							<label
-								htmlFor="name"
+								htmlFor="title"
 								className="block text-sm font-medium text-gray-700"
 							>
 								Project Name
 							</label>
 							<input
 								type="text"
-								name="name"
-								id="name"
+								name="title"
+								id="title"
 								required
 								className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
 							/>

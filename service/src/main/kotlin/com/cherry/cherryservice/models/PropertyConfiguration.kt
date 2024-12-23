@@ -33,8 +33,8 @@ class PropertyConfiguration(
     @Enumerated(EnumType.STRING)
     val source: PropertyConfigurationSource,
 
-    @Column(name = "name", nullable = false)
-    var name: String,
+    @Column(name = "title", nullable = false)
+    var title: String,
 
     @Column(name = "property_type", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -52,6 +52,6 @@ class PropertyConfiguration(
 ) {
 
     fun toDTO(): PropertyConfigurationDTO {
-        return PropertyConfigurationDTO(externalID, creationDate, source, name, propertyType, isRequired, defaultValue, enumOptions)
+        return PropertyConfigurationDTO(externalID, creationDate, source, title, propertyType, isRequired, defaultValue, enumOptions)
     }
 }

@@ -104,7 +104,7 @@ export function TestCaseForm({
 							className="rounded-md border border-gray-200 p-3"
 						>
 							<div className="font-medium text-gray-900">
-								{property.name}
+								{property.title}
 							</div>
 							{property.propertyType === PropertyType.text && (
 								<input
@@ -121,7 +121,7 @@ export function TestCaseForm({
 										)
 									}
 									className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-									placeholder={`Enter ${property.name}`}
+									placeholder={`Enter ${property.title}`}
 								/>
 							)}
 							{property.propertyType === PropertyType.number && (
@@ -139,7 +139,7 @@ export function TestCaseForm({
 										)
 									}
 									className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-									placeholder={`Enter ${property.name}`}
+									placeholder={`Enter ${property.title}`}
 								/>
 							)}
 							{property.propertyType === PropertyType.enum &&
@@ -158,7 +158,7 @@ export function TestCaseForm({
 										}
 										className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
 									>
-										<option value="">Select {property.name}</option>
+										<option value="">Select {property.title}</option>
 										{property.enumOptions.map((option) => (
 											<option key={option} value={option}>
 												{option}

@@ -1,12 +1,12 @@
 import { type LoaderFunctionArgs } from '@remix-run/node'
 import { useLoaderData, Outlet } from '@remix-run/react'
-import { Route, APIRoute } from '~/utility/Routes'
+import { APIRoute } from '~/utility/Routes'
 import { TestRun } from '~/models/types'
 import type {
 	FetchResponse,
 	ProjectTestRunsOutletContext,
 } from '~/models/types'
-import ProjectSidebar from '../components/Sidebar'
+import ProjectSidebar from '../components/ProjectSidebar'
 import { Project } from '../models/project'
 
 export async function loader({ params }: LoaderFunctionArgs) {
@@ -67,7 +67,7 @@ export default function TestRunsIndex() {
 		<div className="flex">
 			<ProjectSidebar
 				projectShortCode={project.projectShortCode}
-				title={project.name}
+				title={project.title}
 				description={project.description}
 			/>
 			<div className="flex-1 overflow-auto p-6">

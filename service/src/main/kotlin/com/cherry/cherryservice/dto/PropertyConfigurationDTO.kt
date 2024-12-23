@@ -8,7 +8,7 @@ data class PropertyConfigurationDTO(
     val propertyConfigurationID: UUID,
     val creationDate: Date,
     val source: PropertyConfigurationSource,
-    val name: String,
+    val title: String,
     val propertyType: PropertyConfigurationType,
     @JsonProperty("isRequired")
     val isRequired: Boolean,

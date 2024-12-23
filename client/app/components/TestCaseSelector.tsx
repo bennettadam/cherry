@@ -117,7 +117,7 @@ export default function TestCaseSelector({
 								key={property.propertyConfigurationID}
 								value={property.propertyConfigurationID}
 							>
-								{property.name}
+								{property.title}
 							</option>
 						))}
 					</select>
@@ -133,7 +133,7 @@ export default function TestCaseSelector({
 						<div key={propertyID} className="relative">
 							<div className="flex items-center justify-between mb-2">
 								<label className="block text-sm font-medium text-gray-700">
-									{property.name}
+									{property.title}
 								</label>
 								<button
 									type="button"

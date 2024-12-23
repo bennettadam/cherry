@@ -23,8 +23,8 @@ class WorkspaceProject(
     @UpdateTimestamp
     val modifyDate: Date = Date(),
 
-    @Column(name = "name")
-    var name: String,
+    @Column(name = "title")
+    var title: String,
 
     @Column(name = "project_short_code")
     var projectShortCode: String,
@@ -34,6 +34,6 @@ class WorkspaceProject(
 ) {
 
     fun toDTO(): WorkspaceProjectDTO {
-        return WorkspaceProjectDTO(externalID, creationDate, name, projectShortCode, description)
+        return WorkspaceProjectDTO(externalID, creationDate, title, projectShortCode, description)
     }
 }

@@ -90,7 +90,7 @@ export default function Projects() {
 											<div>
 												<div className="flex items-center gap-2">
 													<h3 className="text-sm font-medium text-gray-900">
-														{project.name}
+														{project.title}
 													</h3>
 													<span className="text-xs text-gray-500">
 														{project.projectShortCode}

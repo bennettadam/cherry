@@ -6,7 +6,7 @@ import java.util.UUID
 data class WorkspaceProjectDTO(
     val projectID: UUID,
     val creationDate: Date,
-    val name: String,
+    val title: String,
     val projectShortCode: String,
     val description: String?
 )

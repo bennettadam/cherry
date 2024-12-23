@@ -5,7 +5,7 @@ import java.util.UUID
 
 data class UpdatePropertyConfigurationDTO(
     val propertyConfigurationID: UUID,
-    val name: String,
+    val title: String,
     @JsonProperty("isRequired")
     val isRequired: Boolean,
     val defaultValue: String?,

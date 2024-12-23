@@ -32,7 +32,7 @@ class WorkspaceService(
 
     fun createProject(project: CreateWorkspaceProjectDTO) {
         val newProjectModel = WorkspaceProject(
-            name = project.name,
+            title = project.title,
             projectShortCode = project.projectShortCode,
             description = project.description)
         projectRepository.save(newProjectModel)
@@ -134,7 +134,7 @@ class WorkspaceService(
                 PropertyConfigurationSource.CUSTOMER -> {
                     // intentionally don't allow direct changing of the property type in order to reduce complexity
                     // to change the type, the property should be deleted and recreated with the correct type
-                    model.name = property.name
+                    model.title = property.title
                     model.isRequired = property.isRequired
                     model.defaultValue = property.defaultValue
                     model.enumOptions = property.enumOptions
@@ -160,7 +160,7 @@ class WorkspaceService(
 
         val newModel = PropertyConfiguration(
             source = PropertyConfigurationSource.CUSTOMER,
-            name = property.name,
+            title = property.title,
             propertyType = property.propertyType,
             isRequired = property.isRequired,
             defaultValue = property.defaultValue,

@@ -49,7 +49,7 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
                             external_id UUID DEFAULT gen_random_uuid(),
                             creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             modify_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            name TEXT NOT NULL,
+                            title TEXT NOT NULL,
                             project_short_code TEXT NOT NULL,
                             description TEXT
                         )
@@ -78,7 +78,7 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
                             creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             modify_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             source TEXT NOT NULL,
-                            name TEXT NOT NULL,
+                            title TEXT NOT NULL,
                             property_type TEXT NOT NULL,
                             is_required BOOLEAN NOT NULL,
                             default_value TEXT,
@@ -131,7 +131,7 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
                     """.trimIndent())
 
                     val criticalText = "Critical"
-                    jdbcTemplate.update("INSERT INTO property_configurations (source, name, property_type, is_required, default_value, enum_options) VALUES (?, ?, ?, ?, ?, ?);",
+                    jdbcTemplate.update("INSERT INTO property_configurations (source, title, property_type, is_required, default_value, enum_options) VALUES (?, ?, ?, ?, ?, ?);",
                         PropertyConfigurationSource.SYSTEM.toString(),
                         "Priority",
                         PropertyConfigurationType.ENUM.toString(),
@@ -140,7 +140,7 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
                         arrayOf(criticalText, "High", "Medium", "Low"))
 
                     val otherText = "Other"
-                    jdbcTemplate.update("INSERT INTO property_configurations (source, name, property_type, is_required, default_value, enum_options) VALUES (?, ?, ?, ?, ?, ?);",
+                    jdbcTemplate.update("INSERT INTO property_configurations (source, title, property_type, is_required, default_value, enum_options) VALUES (?, ?, ?, ?, ?, ?);",
                         PropertyConfigurationSource.SYSTEM.toString(),
                         "Type",
                         PropertyConfigurationType.ENUM.toString(),

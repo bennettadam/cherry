@@ -56,7 +56,7 @@ export default function TestCaseDetails() {
 									className="rounded-md border border-gray-200 p-3"
 								>
 									<div className="font-medium text-gray-900">
-										{propertyValue.propertyConfiguration.name}
+										{propertyValue.propertyConfiguration.title}
 									</div>
 									<div className="mt-1 text-sm text-gray-500">
 										{propertyValue.value || 'Not set'}

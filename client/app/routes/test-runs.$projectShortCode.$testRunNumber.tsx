@@ -12,7 +12,7 @@ import type {
 	ProjectTestRunsOutletContext,
 	TestCaseRun,
 } from '~/models/types'
-import ProjectSidebar from '../components/Sidebar'
+import ProjectSidebar from '../components/ProjectSidebar'
 import { Project } from '../models/project'
 
 export async function loader({ params }: LoaderFunctionArgs) {

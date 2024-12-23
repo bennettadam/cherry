@@ -82,7 +82,7 @@ export default function ConfigurationProperties() {
 							<tr key={property.propertyConfigurationID}>
 								<td className="whitespace-nowrap px-6 py-4">
 									<div className="text-sm font-medium text-gray-900">
-										{property.name}
+										{property.title}
 									</div>
 								</td>
 								<td className="whitespace-nowrap px-6 py-4">

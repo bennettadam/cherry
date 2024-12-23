@@ -1,13 +1,13 @@
 export interface Project {
 	projectID: string
 	creationDate: number
-	name: string
+	title: string
 	projectShortCode: string
 	description?: string
 }
 
 export interface NewProject extends Record<string, any> {
-	name: string
+	title: string
 	projectShortCode: string
 	description?: string
 }

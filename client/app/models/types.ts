@@ -38,7 +38,7 @@ export interface PropertyConfiguration {
 	propertyConfigurationID: string
 	creationDate: number
 	source: PropertyConfigurationSource
-	name: string
+	title: string
 	propertyType: PropertyType
 	isRequired: boolean
 	defaultValue?: string

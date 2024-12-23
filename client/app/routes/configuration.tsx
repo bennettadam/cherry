@@ -1,10 +1,10 @@
 import { Outlet } from '@remix-run/react'
-import ProjectSidebar from '~/components/Sidebar'
+import Sidebar from '~/components/Sidebar'
 
 export default function ConfigurationLayout() {
 	return (
 		<div className="flex">
-			<ProjectSidebar
+			<Sidebar
 				title="Configuration"
 				items={[{ to: '/configuration/properties', label: 'Properties' }]}
 			/>
