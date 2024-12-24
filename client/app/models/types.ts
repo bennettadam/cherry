@@ -109,6 +109,7 @@ export interface ProjectTestCasesOutletContext {
 }
 
 export interface TestCaseOutletContext {
+	project: Project
 	testCase: TestCase
 	properties: PropertyConfiguration[]
 	propertyValues: PropertyValue[]
@@ -123,4 +124,9 @@ export interface ProjectTestCaseRunsOutletContext {
 	project: Project
 	testRun: TestRun
 	testCaseRuns: TestCaseRun[]
+}
+
+export interface ErrorResponse {
+	error: string
+	message: string
 }

@@ -64,7 +64,7 @@ export default function TestRunsIndex() {
 	}
 
 	return (
-		<div className="flex">
+		<div className="flex h-full">
 			<ProjectSidebar
 				projectShortCode={project.projectShortCode}
 				title={project.title}

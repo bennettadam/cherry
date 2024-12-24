@@ -6,6 +6,8 @@ import {
 	CreateTestCase,
 } from '../models/types'
 import { useState } from 'react'
+import { useRef, useEffect } from 'react'
+import { SelectDropdown } from './SelectDropdown'
 
 export enum TestCaseFormMode {
 	create,
@@ -59,7 +61,7 @@ export function TestCaseForm({
 			<div>
 				<label
 					htmlFor="title"
-					className="block text-sm font-medium text-gray-700"
+					className="block text-base font-semibold text-gray-700"
 				>
 					Title
 				</label>
@@ -67,7 +69,6 @@ export function TestCaseForm({
 					type="text"
 					name="title"
 					id="title"
-					required
 					defaultValue={defaultValues?.title}
 					className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
 					placeholder="Enter test case title"
@@ -78,7 +79,7 @@ export function TestCaseForm({
 			<div>
 				<label
 					htmlFor="description"
-					className="block text-sm font-medium text-gray-700"
+					className="block text-base font-semibold text-gray-700"
 				>
 					Description
 				</label>
@@ -94,16 +95,13 @@ export function TestCaseForm({
 
 			{/* Properties Section */}
 			<div>
-				<h3 className="block text-sm font-medium text-gray-700 mb-3">
+				<h3 className="block text-md font-semibold text-gray-700 mb-3">
 					Properties
 				</h3>
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{properties.map((property) => (
-						<div
-							key={property.propertyConfigurationID}
-							className="rounded-md border border-gray-200 p-3"
-						>
-							<div className="font-medium text-gray-900">
+						<div key={property.propertyConfigurationID}>
+							<div className="text-sm font-medium text-gray-900">
 								{property.title}
 							</div>
 							{property.propertyType === PropertyType.text && (
@@ -144,27 +142,21 @@ export function TestCaseForm({
 							)}
 							{property.propertyType === PropertyType.enum &&
 								property.enumOptions && (
-									<select
+									<SelectDropdown
+										options={property.enumOptions}
 										value={
 											propertyValues[
 												property.propertyConfigurationID
-											] ?? ''
+											]
 										}
-										onChange={(e) =>
+										onChange={(value) =>
 											handlePropertyChange(
 												property.propertyConfigurationID,
-												e.target.value
+												value
 											)
 										}
-										className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-									>
-										<option value="">Select {property.title}</option>
-										{property.enumOptions.map((option) => (
-											<option key={option} value={option}>
-												{option}
-											</option>
-										))}
-									</select>
+										placeholder={`Select ${property.title}`}
+									/>
 								)}
 						</div>
 					))}
@@ -175,7 +167,7 @@ export function TestCaseForm({
 			<div>
 				<label
 					htmlFor="testInstructions"
-					className="block text-sm font-medium text-gray-700"
+					className="block text-base font-semibold text-gray-700"
 				>
 					Test Instructions
 				</label>

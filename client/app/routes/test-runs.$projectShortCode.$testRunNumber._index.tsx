@@ -6,6 +6,10 @@ import type { UpdateTestRun } from '~/models/types'
 import { ActionMenu, type ActionMenuItem } from '~/components/ActionMenu'
 import { TestRunStatusBadge } from '~/components/TestRunStatusBadge'
 import { TestCaseRunStatusBadge } from '~/components/TestCaseRunStatusBadge'
+import { Table, type Column } from '~/components/Table'
+import type { TestCaseRun } from '~/models/types'
+import { Tools } from '~/utility/Tools'
+import { BackButton } from '~/components/BackButton'
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const projectShortCode = params.projectShortCode
@@ -149,8 +153,38 @@ export default function TestRunDetails() {
 		}
 	})()
 
+	const columns: Column<TestCaseRun>[] = [
+		{
+			header: 'ID',
+			key: 'id',
+			render: (testCaseRun) =>
+				Tools.testCaseDisplayCode(project, testCaseRun.testCase),
+		},
+		{
+			header: 'Title',
+			key: 'title',
+			render: (testCaseRun) => testCaseRun.title,
+		},
+		{
+			header: 'Status',
+			key: 'status',
+			render: (testCaseRun) => (
+				<TestCaseRunStatusBadge status={testCaseRun.status} />
+			),
+		},
+		{
+			header: 'Created',
+			key: 'created',
+			render: (testCaseRun) =>
+				new Date(testCaseRun.creationDate).toLocaleString(),
+		},
+	]
+
 	return (
-		<div className="p-6">
+		<div>
+			<div className="flex items-center justify-between mb-4">
+				<BackButton />
+			</div>
 			<div className="mb-6 flex justify-between items-start">
 				<div>
 					<h1 className="text-2xl font-semibold text-gray-900">
@@ -177,48 +211,13 @@ export default function TestRunDetails() {
 			</div>
 
 			<h3 className="text-lg font-medium text-gray-900 mb-4">Test Cases</h3>
-			<table className="min-w-full divide-y divide-gray-200">
-				<thead>
-					<tr>
-						<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-							ID
-						</th>
-						<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Title
-						</th>
-						<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Status
-						</th>
-						<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-							Created
-						</th>
-					</tr>
-				</thead>
-				<tbody className="bg-white divide-y divide-gray-200">
-					{testCaseRuns.map((testCaseRun) => (
-						<tr
-							onClick={() =>
-								navigate(testCaseRun.testCase.testCaseNumber.toString())
-							}
-							key={testCaseRun.testCaseRunID}
-							className="cursor-pointer hover:bg-gray-50"
-						>
-							<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-								{testCaseRun.testCase.testCaseNumber}
-							</td>
-							<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-								{testCaseRun.title}
-							</td>
-							<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-								<TestCaseRunStatusBadge status={testCaseRun.status} />
-							</td>
-							<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-								{new Date(testCaseRun.creationDate).toLocaleString()}
-							</td>
-						</tr>
-					))}
-				</tbody>
-			</table>
+			<Table
+				data={testCaseRuns}
+				columns={columns}
+				onRowClick={(testCaseRun) =>
+					navigate(testCaseRun.testCase.testCaseNumber.toString())
+				}
+			/>
 		</div>
 	)
 }

@@ -1,10 +1,20 @@
 import { json, type ActionFunctionArgs } from '@remix-run/node'
-import { useLoaderData, useSubmit, Link, useFetcher } from '@remix-run/react'
-import { useState } from 'react'
+import {
+	useLoaderData,
+	useSubmit,
+	Link,
+	useFetcher,
+	useNavigate,
+} from '@remix-run/react'
+import { useState, useEffect } from 'react'
 import ProjectModal from '~/components/ProjectModal'
-import type { FetchResponse } from '~/models/types'
+import type { FetchResponse, ErrorResponse } from '~/models/types'
 import { APIRoute, Route } from '~/utility/Routes'
 import { NewProject, Project } from '~/models/project'
+import { Column, Table } from '~/components/Table'
+import { DateDisplay } from '~/components/DateDisplay'
+
+type ActionResponse = { error?: string }
 
 export async function action({ request }: ActionFunctionArgs) {
 	try {
@@ -17,13 +27,19 @@ export async function action({ request }: ActionFunctionArgs) {
 		})
 
 		if (!response.ok) {
-			throw new Error('Failed to create property')
+			const errorData = (await response.json()) as ErrorResponse
+			throw new Error(errorData.message || 'Failed to create project')
 		}
 
-		return Response.json({ success: true })
+		return Response.json({})
 	} catch (error) {
 		return Response.json(
-			{ error: 'Failed to create property' },
+			{
+				error:
+					error instanceof Error
+						? error.message
+						: 'Failed to create project',
+			},
 			{ status: 400 }
 		)
 	}
@@ -45,17 +61,41 @@ export async function loader() {
 }
 
 export default function Projects() {
+	const navigate = useNavigate()
 	const [isModalOpen, setIsModalOpen] = useState(false)
 	const { data } = useLoaderData<typeof loader>()
-	const fetcher = useFetcher()
+	const fetcher = useFetcher<ActionResponse>()
 
 	const handleCreateProject = (newProject: NewProject) => {
 		fetcher.submit(newProject, {
 			method: 'POST',
 			encType: 'application/json',
 		})
-		setIsModalOpen(false)
 	}
+
+	useEffect(() => {
+		if (fetcher.state === 'idle' && !fetcher.data?.error) {
+			setIsModalOpen(false)
+		}
+	}, [fetcher.state, fetcher.data])
+
+	const columns: Column<Project>[] = [
+		{
+			header: 'Project Code',
+			key: 'projectShortCode',
+			render: (project) => project.projectShortCode,
+		},
+		{
+			header: 'Title',
+			key: 'title',
+			render: (project) => project.title,
+		},
+		{
+			header: 'Created',
+			key: 'creationDate',
+			render: (project) => <DateDisplay date={project.creationDate} />,
+		},
+	]
 
 	return (
 		<main className="flex-1 overflow-auto">
@@ -71,52 +111,20 @@ export default function Projects() {
 						New Project
 					</button>
 				</div>
-				<div className="rounded-lg border border-gray-200">
-					{data.length === 0 ? (
-						<div className="p-4 text-sm text-gray-500">
-							No projects created yet.
-						</div>
-					) : (
-						<ul className="divide-y divide-gray-200">
-							{data.map((project) => (
-								<li key={project.projectID}>
-									<Link
-										to={Route.viewProjectTestCases(
-											project.projectShortCode
-										)}
-										className="block p-4 transition-colors hover:bg-gray-50"
-									>
-										<div className="flex justify-between">
-											<div>
-												<div className="flex items-center gap-2">
-													<h3 className="text-sm font-medium text-gray-900">
-														{project.title}
-													</h3>
-													<span className="text-xs text-gray-500">
-														{project.projectShortCode}
-													</span>
-												</div>
-												<p className="mt-1 text-sm text-gray-500 line-clamp-2">
-													{project.description}
-												</p>
-											</div>
-											<div className="text-xs text-gray-500">
-												{new Date(
-													project.creationDate
-												).toLocaleDateString()}
-											</div>
-										</div>
-									</Link>
-								</li>
-							))}
-						</ul>
-					)}
-				</div>
+
+				<Table
+					data={data}
+					columns={columns}
+					onRowClick={(project) =>
+						navigate(Route.viewProjectTestCases(project.projectShortCode))
+					}
+				/>
 
 				<ProjectModal
 					isOpen={isModalOpen}
 					onClose={() => setIsModalOpen(false)}
 					onSubmit={handleCreateProject}
+					error={fetcher.data?.error}
 				/>
 			</div>
 		</main>

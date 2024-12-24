@@ -10,9 +10,9 @@ import org.springframework.data.repository.query.Param
 import java.util.UUID
 
 interface TestCaseRepository : JpaRepository<TestCase, Long> {
-    fun findByProject(project: WorkspaceProject): List<TestCase>
+    fun findByProjectOrderByTestCaseNumberAsc(project: WorkspaceProject): List<TestCase>
 
-    fun countByProject(project: WorkspaceProject): Long
+    fun findTopByProjectOrderByTestCaseNumberDesc(project: WorkspaceProject): TestCase?
 
     fun findByExternalID(externalID: UUID): TestCase?
 }

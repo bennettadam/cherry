@@ -19,4 +19,8 @@ export class Tools {
 	static testCaseDisplayCode(project: Project, testCase: TestCase) {
 		return `${project.projectShortCode}-${testCase.testCaseNumber}`
 	}
+
+	static capitalizeFirstLetter(str: string): string {
+		return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+	}
 }

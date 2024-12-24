@@ -1,11 +1,13 @@
 import { type LoaderFunctionArgs } from '@remix-run/node'
-import { Link, useOutletContext } from '@remix-run/react'
+import { Link, useNavigate, useOutletContext } from '@remix-run/react'
 import { APIRoute } from '~/utility/Routes'
 import {
 	FetchResponse,
 	ProjectTestCasesOutletContext,
 	TestCase,
 } from '~/models/types'
+import { Table, type Column } from '~/components/Table'
+import { DateDisplay } from '~/components/DateDisplay'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	const projectShortCode = params.projectShortCode
@@ -30,7 +32,53 @@ export async function loader({ params }: LoaderFunctionArgs) {
 }
 
 export default function TestCasesIndex() {
-	const { testCases } = useOutletContext<ProjectTestCasesOutletContext>()
+	const { project, testCases, properties } =
+		useOutletContext<ProjectTestCasesOutletContext>()
+	const navigate = useNavigate()
+
+	// Find property configuration IDs for priority and type
+	const priorityConfig = properties.find(
+		(p) => p.title.toLowerCase() === 'priority'
+	)
+	const typeConfig = properties.find((p) => p.title.toLowerCase() === 'type')
+
+	const columns: Column<TestCase>[] = [
+		{
+			header: 'ID',
+			key: 'testCaseNumber',
+			render: (testCase) =>
+				`${project.projectShortCode}-${testCase.testCaseNumber}`,
+		},
+		{
+			header: 'Title',
+			key: 'title',
+			render: (testCase) => testCase.title,
+		},
+		{
+			header: 'Priority',
+			key: 'priority',
+			render: (testCase) =>
+				priorityConfig
+					? testCase.propertyValues[
+							priorityConfig.propertyConfigurationID
+					  ] || '-'
+					: '-',
+		},
+		{
+			header: 'Type',
+			key: 'type',
+			render: (testCase) =>
+				typeConfig
+					? testCase.propertyValues[typeConfig.propertyConfigurationID] ||
+					  '-'
+					: '-',
+		},
+		{
+			header: 'Created',
+			key: 'creationDate',
+			render: (testCase) => <DateDisplay date={testCase.creationDate} />,
+		},
+	]
 
 	return (
 		<div>
@@ -44,33 +92,13 @@ export default function TestCasesIndex() {
 				</Link>
 			</div>
 
-			{testCases.length === 0 ? (
-				<div className="p-4 text-sm text-gray-500">
-					No test cases created yet.
-				</div>
-			) : (
-				<ul className="divide-y divide-gray-200">
-					{testCases.map((testCase) => (
-						<li key={testCase.testCaseID}>
-							<Link
-								to={testCase.testCaseNumber.toString()}
-								className="block p-4 hover:bg-gray-50"
-							>
-								<div className="flex items-start justify-between">
-									<div>
-										<h3 className="text-sm font-medium text-gray-900">
-											{testCase.title}
-										</h3>
-										<p className="mt-1 text-sm text-gray-500">
-											{testCase.description}
-										</p>
-									</div>
-								</div>
-							</Link>
-						</li>
-					))}
-				</ul>
-			)}
+			<Table
+				data={testCases}
+				columns={columns}
+				onRowClick={(testCase) =>
+					navigate(testCase.testCaseNumber.toString())
+				}
+			/>
 		</div>
 	)
 }

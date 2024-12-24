@@ -1,11 +1,32 @@
-import { Link, useOutletContext } from '@remix-run/react'
+import { Link, useOutletContext, useNavigate } from '@remix-run/react'
 import { ProjectTestRunsOutletContext, TestRun } from '~/models/types'
 import { TestRunStatusBadge } from '~/components/TestRunStatusBadge'
 import { Route } from '../utility/Routes'
+import { Table, Column } from '~/components/Table'
+import { DateDisplay } from '~/components/DateDisplay'
 
 export default function TestRunsIndex() {
 	const { project, testRuns } =
 		useOutletContext<ProjectTestRunsOutletContext>()
+	const navigate = useNavigate()
+
+	const columns: Column<TestRun>[] = [
+		{
+			header: 'Title',
+			key: 'title',
+			render: (testRun) => testRun.title,
+		},
+		{
+			header: 'Status',
+			key: 'status',
+			render: (testRun) => <TestRunStatusBadge status={testRun.status} />,
+		},
+		{
+			header: 'Created',
+			key: 'creationDate',
+			render: (testRun) => <DateDisplay date={testRun.creationDate} />,
+		},
+	]
 
 	return (
 		<div>
@@ -14,9 +35,6 @@ export default function TestRunsIndex() {
 					<h1 className="text-2xl font-semibold text-gray-900">
 						Test Runs
 					</h1>
-					<p className="mt-2 text-gray-600">
-						View all test runs for this project
-					</p>
 				</div>
 
 				<Link
@@ -26,68 +44,11 @@ export default function TestRunsIndex() {
 					Create Test Run
 				</Link>
 			</div>
-			<div className="overflow-hidden rounded-lg border border-gray-200">
-				<table className="min-w-full divide-y divide-gray-200">
-					<thead className="bg-gray-50">
-						<tr>
-							<th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-								Title
-							</th>
-							<th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-								Status
-							</th>
-							<th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-								Start Time
-							</th>
-							<th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-								Duration
-							</th>
-							<th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-								Tests
-							</th>
-						</tr>
-					</thead>
-					<tbody className="divide-y divide-gray-200 bg-white">
-						{testRuns.map((testRun) => (
-							<tr key={testRun.testRunID}>
-								<td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-									<Link
-										to={Route.viewTestRun(
-											project.projectShortCode,
-											testRun.testRunNumber
-										)}
-										className="text-blue-600 hover:text-blue-800 hover:underline"
-									>
-										{testRun.title}
-									</Link>
-								</td>
-								<td className="whitespace-nowrap px-6 py-4">
-									<TestRunStatusBadge status={testRun.status} />
-								</td>
-								<td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-									{new Date(testRun.creationDate).toLocaleString()}
-								</td>
-								<td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-									-
-								</td>
-								<td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-									-
-								</td>
-							</tr>
-						))}
-						{testRuns.length === 0 && (
-							<tr>
-								<td
-									colSpan={5}
-									className="px-6 py-4 text-center text-sm text-gray-500"
-								>
-									No test runs found
-								</td>
-							</tr>
-						)}
-					</tbody>
-				</table>
-			</div>
+			<Table
+				data={testRuns}
+				columns={columns}
+				onRowClick={(testRun) => navigate(testRun.testRunNumber.toString())}
+			/>
 		</div>
 	)
 }

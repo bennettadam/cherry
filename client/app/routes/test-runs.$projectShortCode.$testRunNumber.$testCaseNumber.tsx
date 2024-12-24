@@ -6,7 +6,8 @@ import {
 	TestCaseRunStatus,
 } from '~/models/types'
 import { useState } from 'react'
-import { Tools } from '../utility/Tools'
+import { Tools } from '~/utility/Tools'
+import { BackButton } from '~/components/BackButton'
 
 interface UpdateTestCaseRun extends Record<string, any> {
 	status: TestCaseRunStatus
@@ -73,26 +74,7 @@ export default function TestCaseRunDetails() {
 
 	return (
 		<div className="p-6">
-			<Link
-				to=".."
-				relative="path"
-				className="inline-flex items-center mb-4 text-sm text-gray-600 hover:text-gray-900"
-			>
-				<svg
-					className="w-4 h-4 mr-1"
-					fill="none"
-					strokeWidth="2"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-				>
-					<path
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-					/>
-				</svg>
-				Back
-			</Link>
+			<BackButton />
 
 			<div className="mb-6">
 				<div className="flex items-center gap-4">

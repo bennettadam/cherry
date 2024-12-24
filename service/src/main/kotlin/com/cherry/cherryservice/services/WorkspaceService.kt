@@ -31,10 +31,24 @@ class WorkspaceService(
     }
 
     fun createProject(project: CreateWorkspaceProjectDTO) {
+        require(project.title.isNotBlank()) { "Project must have a title" }
+        require(project.projectShortCode.isNotBlank()) { "Project must have a short code" }
+
+        var existingProject = projectRepository.findByTitle(project.title)
+        require(existingProject == null) { "Project with title ${project.title} already exists" }
+
+        existingProject = projectRepository.findByProjectShortCode(project.projectShortCode)
+        require(existingProject == null) { "Project with short code ${project.projectShortCode} already exists" }
+
+        var description: String? = null
+        if (!project.description.isNullOrBlank()) {
+            description = project.description
+        }
+
         val newProjectModel = WorkspaceProject(
             title = project.title,
             projectShortCode = project.projectShortCode,
-            description = project.description)
+            description = description)
         projectRepository.save(newProjectModel)
     }
 
@@ -42,7 +56,7 @@ class WorkspaceService(
     fun retrieveTestCases(projectShortCode: String): List<TestCaseDTO> {
         val project = projectRepository.findByProjectShortCode(projectShortCode)
         requireNotNull(project) { "No project found" }
-        val testCases = testCaseRepository.findByProject(project)
+        val testCases = testCaseRepository.findByProjectOrderByTestCaseNumberAsc(project)
         return testCases.map { it.toDTO() }
     }
 
@@ -65,10 +79,11 @@ class WorkspaceService(
         val project = projectRepository.findByProjectShortCode(projectShortCode)
         requireNotNull(project) { "No project found" }
 
-        val testCaseNumber = testCaseRepository.countByProject(project) + 1 // index test case numbers starting at 1
+        // find the test case with the largest test case number and bump it up by 1
+        val largestTestCaseNumber = testCaseRepository.findTopByProjectOrderByTestCaseNumberDesc(project)?.testCaseNumber ?: 0
         val newTestCaseModel = TestCase(
             project = project,
-            testCaseNumber = testCaseNumber,
+            testCaseNumber = largestTestCaseNumber + 1,
             title = testCase.title,
             description = testCase.description,
             testInstructions = testCase.testInstructions,
