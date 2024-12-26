@@ -8,6 +8,8 @@ import {
 import { useState } from 'react'
 import { useRef, useEffect } from 'react'
 import { SelectDropdown } from './SelectDropdown'
+import { ErrorMessage } from './ErrorMessage'
+import { PropertyInput } from './PropertyInput'
 
 export enum TestCaseFormMode {
 	create,
@@ -20,6 +22,8 @@ interface TestCaseFormProps {
 	mode: TestCaseFormMode
 	onCancel: () => void
 	onSubmit: (testCase: CreateTestCase) => void
+	error?: string
+	onDelete?: () => void
 }
 
 export function TestCaseForm({
@@ -28,17 +32,40 @@ export function TestCaseForm({
 	mode,
 	onCancel,
 	onSubmit,
+	error,
+	onDelete,
 }: TestCaseFormProps) {
-	const submit = useSubmit()
 	const [propertyValues, setPropertyValues] = useState<Record<string, string>>(
-		defaultValues?.propertyValues ?? {}
+		() => {
+			if (mode === TestCaseFormMode.create) {
+				// Create mode - use default values from properties
+				return properties.reduce((acc, property) => {
+					if (property.defaultValue) {
+						acc[property.propertyConfigurationID] = property.defaultValue
+					}
+					return acc
+				}, {} as Record<string, string>)
+			} else if (mode === TestCaseFormMode.edit) {
+				// Edit mode - use existing values
+				return defaultValues?.propertyValues || {}
+			}
+			return {}
+		}
 	)
 
-	const handlePropertyChange = (propertyID: string, value: string) => {
-		setPropertyValues((prev) => ({
-			...prev,
-			[propertyID]: value,
-		}))
+	const handlePropertyChange = (propertyID: string, value?: string) => {
+		setPropertyValues((prev) => {
+			if (value) {
+				return {
+					...prev,
+					[propertyID]: value,
+				}
+			} else {
+				const newValues = { ...prev }
+				delete newValues[propertyID]
+				return newValues
+			}
+		})
 	}
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -57,6 +84,8 @@ export function TestCaseForm({
 
 	return (
 		<Form method="post" className="space-y-6" onSubmit={handleSubmit}>
+			{error && <ErrorMessage message={error} />}
+
 			{/* Title Field */}
 			<div>
 				<label
@@ -104,60 +133,24 @@ export function TestCaseForm({
 							<div className="text-sm font-medium text-gray-900">
 								{property.title}
 							</div>
-							{property.propertyType === PropertyType.text && (
-								<input
-									type="text"
-									value={
-										propertyValues[
-											property.propertyConfigurationID
-										] ?? ''
-									}
-									onChange={(e) =>
-										handlePropertyChange(
-											property.propertyConfigurationID,
-											e.target.value
-										)
-									}
-									className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-									placeholder={`Enter ${property.title}`}
-								/>
-							)}
-							{property.propertyType === PropertyType.number && (
-								<input
-									type="number"
-									value={
-										propertyValues[
-											property.propertyConfigurationID
-										] ?? ''
-									}
-									onChange={(e) =>
-										handlePropertyChange(
-											property.propertyConfigurationID,
-											e.target.value
-										)
-									}
-									className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-									placeholder={`Enter ${property.title}`}
-								/>
-							)}
-							{property.propertyType === PropertyType.singleSelectList &&
-								property.selectOptions && (
-									<SelectDropdown
-										options={property.selectOptions}
-										value={
-											propertyValues[
-												property.propertyConfigurationID
-											]
-										}
-										onChange={(value) =>
-											handlePropertyChange(
-												property.propertyConfigurationID,
-												value
-											)
-										}
-										placeholder={`Select ${property.title}`}
-									/>
-								)}
+							<PropertyInput
+								property={property}
+								initialValue={
+									propertyValues[property.propertyConfigurationID]
+								}
+								onChange={(value) =>
+									handlePropertyChange(
+										property.propertyConfigurationID,
+										value
+									)
+								}
+								onUnset={() =>
+									handlePropertyChange(
+										property.propertyConfigurationID,
+										undefined
+									)
+								}
+							/>
 						</div>
 					))}
 				</div>
@@ -187,6 +180,15 @@ export function TestCaseForm({
 			</div>
 
 			<div className="flex justify-end space-x-3">
+				{mode === TestCaseFormMode.edit && onDelete && (
+					<button
+						type="button"
+						onClick={onDelete}
+						className="rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+					>
+						Delete
+					</button>
+				)}
 				<button
 					type="button"
 					onClick={onCancel}

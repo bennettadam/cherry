@@ -9,6 +9,7 @@ import com.cherry.cherryservice.dto.testcases.TestCaseDTO
 import com.cherry.cherryservice.dto.testruns.*
 import com.cherry.cherryservice.models.*
 import com.cherry.cherryservice.repositories.*
+import com.cherry.cherryservice.utility.Tools
 import jakarta.transaction.Transactional
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -34,6 +35,8 @@ class WorkspaceService(
     fun createProject(project: CreateWorkspaceProjectDTO) {
         require(project.title.isNotBlank()) { "Project must have a title" }
         require(project.projectShortCode.isNotBlank()) { "Project must have a short code" }
+
+        require(project.projectShortCode.matches(Regex("^[A-Z0-9]+$"))) { "Project short code must only contain uppercase letters and numbers" }
 
         var existingProject = projectRepository.findByTitle(project.title)
         require(existingProject == null) { "Project with title ${project.title} already exists" }
@@ -65,9 +68,12 @@ class WorkspaceService(
     fun updateTestCase(testCaseID: UUID, updateDTO: CreateTestCaseDTO) {
         val testCase = testCaseRepository.findByExternalID(testCaseID)
         requireNotNull(testCase) { "No test case found with id $testCaseID" }
+
+        require(updateDTO.title.isNotBlank()) { "Test case must have a title" }
+
         testCase.title = updateDTO.title
-        testCase.description = updateDTO.description
-        testCase.testInstructions = updateDTO.testInstructions
+        testCase.description = Tools.sanitize(updateDTO.description)
+        testCase.testInstructions = Tools.sanitize(updateDTO.testInstructions)
         testCaseRepository.save(testCase)
 
         // wipe property values and recreate from update request
@@ -80,14 +86,16 @@ class WorkspaceService(
         val project = projectRepository.findByProjectShortCode(projectShortCode)
         requireNotNull(project) { "No project found" }
 
+        require(testCase.title.isNotBlank()) { "Test case must have a title" }
+
         // find the test case with the largest test case number and bump it up by 1
         val largestTestCaseNumber = testCaseRepository.findTopByProjectOrderByTestCaseNumberDesc(project)?.testCaseNumber ?: 0
         val newTestCaseModel = TestCase(
             project = project,
             testCaseNumber = largestTestCaseNumber + 1,
             title = testCase.title,
-            description = testCase.description,
-            testInstructions = testCase.testInstructions,
+            description = Tools.sanitize(testCase.description),
+            testInstructions = Tools.sanitize(testCase.testInstructions),
         )
         testCaseRepository.save(newTestCaseModel)
 
@@ -102,7 +110,7 @@ class WorkspaceService(
 
             val inputPropertyValue = updatedPropertyValue[propertyConfigurationModel.externalID]
             if (propertyConfigurationModel.isRequired) {
-                requireNotNull(inputPropertyValue) { "Expecting input property" }
+                requireNotNull(inputPropertyValue) { "Expecting value for ${propertyConfigurationModel.title} property" }
             }
             else if (inputPropertyValue == null) {
                 // skip processing this if the property is not null
@@ -119,7 +127,7 @@ class WorkspaceService(
                 }
                 PropertyConfigurationType.SINGLE_SELECT_LIST -> {
                     val selectOptions = propertyConfigurationModel.selectOptions ?: emptyList()
-                    require(selectOptions.contains(inputPropertyValue)) { "Unrecognized enum option" }
+                    require(selectOptions.contains(inputPropertyValue)) { "Unrecognized select option '$inputPropertyValue' for ${propertyConfigurationModel.title} property" }
                     propertyValue = inputPropertyValue
                 }
             }
@@ -133,35 +141,53 @@ class WorkspaceService(
         }
     }
 
+    @Transactional
+    fun deleteTestCase(testCaseID: UUID) {
+        val testCase = testCaseRepository.findByExternalID(testCaseID)
+        requireNotNull(testCase) { "No test case found with id $testCaseID" }
+
+        // delete all references to this test case from test case property values
+        testCasePropertyValueRepository.deleteAllByTestCase(testCase)
+
+        testCaseRepository.delete(testCase)
+    }
+
     fun retrieveProperties(): List<PropertyConfigurationDTO> {
         val properties = propertyConfigurationRepository.findAll()
         return properties.map { it.toDTO() }
     }
 
     fun updateProperty(property: UpdatePropertyConfigurationDTO) {
-        try {
-            val model = propertyConfigurationRepository.findByExternalID(property.propertyConfigurationID)
-            requireNotNull(model) { "Unknown property model: ${property.propertyConfigurationID}" }
+        val model = propertyConfigurationRepository.findByExternalID(property.propertyConfigurationID)
+        requireNotNull(model) { "Unknown property model: ${property.propertyConfigurationID}" }
 
-            when (model.source) {
-                PropertyConfigurationSource.SYSTEM -> {
-                    log.error("Unable to update system property")
-                }
-                PropertyConfigurationSource.CUSTOMER -> {
-                    // intentionally don't allow direct changing of the property type in order to reduce complexity
-                    // to change the type, the property should be deleted and recreated with the correct type
-                    model.title = property.title
-                    model.isRequired = property.isRequired
-                    model.defaultValue = property.defaultValue
-                    model.selectOptions = property.selectOptions
-                }
+        when (model.source) {
+            PropertyConfigurationSource.SYSTEM -> {
+                log.error("Unable to update system property")
             }
+            PropertyConfigurationSource.CUSTOMER -> {
+                if (property.isRequired) {
+                    require(!property.defaultValue.isNullOrBlank()) { "Required properties must have a default value" }
+                }
 
-            propertyConfigurationRepository.save(model)
+                if (model.propertyType == PropertyConfigurationType.SINGLE_SELECT_LIST) {
+                    requireNotNull(property.selectOptions) { "Missing select options configuration" }
+
+                    if (property.defaultValue != null) {
+                        require(property.selectOptions.contains(property.defaultValue)) { "Default value must be a valid option" }
+                    }
+                }
+
+                // intentionally don't allow direct changing of the property type in order to reduce complexity
+                // to change the type, the property should be deleted and recreated with the correct type
+                model.title = property.title
+                model.isRequired = property.isRequired
+                model.defaultValue = property.defaultValue
+                model.selectOptions = property.selectOptions
+            }
         }
-        catch (e: Exception) {
-            log.error("Encountered error while updating property model ${property.propertyConfigurationID}", e)
-        }
+
+        propertyConfigurationRepository.save(model)
     }
 
     @Transactional
@@ -209,7 +235,7 @@ class WorkspaceService(
         testCasePropertyValueRepository.deleteAllByPropertyConfiguration(propertyModel)
 
         // finally, delete the property configuration
-        propertyConfigurationRepository.deleteByExternalID(propertyConfigurationID)
+        propertyConfigurationRepository.delete(propertyModel)
     }
 
     fun retrieveTestRuns(projectShortCode: String): List<TestRunDTO> {

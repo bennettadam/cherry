@@ -1,12 +1,9 @@
-import { type LoaderFunctionArgs } from '@remix-run/node'
-import { useLoaderData, useOutletContext } from '@remix-run/react'
+import { useOutletContext } from '@remix-run/react'
 import { Link } from '@remix-run/react'
 import {
 	PropertyConfiguration,
 	PropertyConfigurationOutletContext,
-	PropertyConfigurationResponse,
 } from '~/models/types'
-import { APIRoute } from '~/utility/Routes'
 import { Table, type Column } from '~/components/Table'
 import { useNavigate } from '@remix-run/react'
 import { Tools } from '~/utility/Tools'

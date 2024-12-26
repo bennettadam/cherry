@@ -127,7 +127,6 @@ export interface ProjectTestCaseRunsOutletContext {
 }
 
 export interface ErrorResponse {
-	error: string
 	message: string
 }
 

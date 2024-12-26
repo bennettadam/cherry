@@ -5,20 +5,10 @@ import {
 	PropertyConfigurationResponse,
 } from '~/models/types'
 import { Outlet, useLoaderData } from '@remix-run/react'
+import { APIClient } from '~/utility/APIClient'
 
 export async function loader({}: LoaderFunctionArgs) {
-	const response = await fetch(APIRoute.properties, {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-	})
-
-	if (!response.ok) {
-		throw new Error('Failed to fetch properties')
-	}
-
-	return (await response.json()) as PropertyConfigurationResponse
+	return APIClient.get<PropertyConfigurationResponse>(APIRoute.properties)
 }
 
 export default function ConfigurationProperties() {

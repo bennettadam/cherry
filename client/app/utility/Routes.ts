@@ -1,4 +1,12 @@
 export class Route {
+	static get index() {
+		return '/'
+	}
+
+	static get newProject() {
+		return '/projects/new'
+	}
+
 	static viewProjectTestCases(projectShortCode: string) {
 		return `/test-cases/${projectShortCode}`
 	}

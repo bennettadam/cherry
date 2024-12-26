@@ -5,9 +5,14 @@ import {
 } from '@remix-run/node'
 import { useActionData, useOutletContext, useSubmit } from '@remix-run/react'
 import type { PropertyFormData } from '~/components/PropertyForm'
-import PropertyForm from '~/components/PropertyForm'
+import PropertyForm, { PropertyFormMode } from '~/components/PropertyForm'
 import { APIRoute, Route } from '~/utility/Routes'
-import { PropertyConfigurationDetailsOutletContext } from '../models/types'
+import {
+	ErrorResponse,
+	PropertyConfigurationDetailsOutletContext,
+} from '~/models/types'
+import { APIClient } from '~/utility/APIClient'
+import { Tools } from '~/utility/Tools'
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const propertyID = params.propertyID
@@ -15,59 +20,31 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		throw new Response('Property ID is required', { status: 400 })
 	}
 
-	if (request.method === 'DELETE') {
-		try {
-			const response = await fetch(APIRoute.property(propertyID), {
-				method: 'DELETE',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-			})
-
-			if (!response.ok) {
-				throw new Error('Failed to delete property')
-			}
-
+	try {
+		if (request.method === 'DELETE') {
+			await APIClient.delete(APIRoute.property(propertyID))
 			return redirect(Route.viewProperties)
-		} catch (error) {
-			return Response.json(
-				{ error: 'Failed to delete property' },
-				{ status: 400 }
-			)
-		}
-	} else {
-		try {
-			const response = await fetch(APIRoute.properties, {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: await request.text(),
-			})
-
-			if (!response.ok) {
-				throw new Error('Failed to create property')
-			}
-
+		} else if (request.method === 'PUT') {
+			const body = await request.json()
+			await APIClient.put(APIRoute.properties, { body })
 			return redirect(Route.viewProperty(propertyID))
-		} catch (error) {
-			return Response.json(
-				{ error: 'Failed to edit property' },
-				{ status: 400 }
-			)
+		} else {
+			throw new Error('Invalid request method')
 		}
+	} catch (error) {
+		return Response.json(Tools.mapErrorToResponse(error), { status: 400 })
 	}
 }
 
 export default function EditProperty() {
 	const { property } =
 		useOutletContext<PropertyConfigurationDetailsOutletContext>()
-	const actionData = useActionData<typeof action>()
+	const actionData = useActionData<ErrorResponse>()
 	const submit = useSubmit()
 
 	const handleDelete = () => {
 		if (window.confirm('Are you sure you want to delete this property?')) {
-			submit(null, { method: 'delete' })
+			submit(null, { method: 'DELETE' })
 		}
 	}
 
@@ -76,8 +53,7 @@ export default function EditProperty() {
 			propertyConfigurationID: property.propertyConfigurationID,
 			...data,
 		}
-		data.selectOptions
-		submit(updateData, { method: 'post', encType: 'application/json' })
+		submit(updateData, { method: 'PUT', encType: 'application/json' })
 	}
 
 	return (
@@ -91,9 +67,9 @@ export default function EditProperty() {
 			<PropertyForm
 				defaultValues={property}
 				onSubmit={handleSubmit}
-				error={actionData?.error}
+				error={actionData?.message}
 				submitLabel="Save Changes"
-				allowTypeEdit={false}
+				mode={PropertyFormMode.edit}
 				onDelete={handleDelete}
 			/>
 		</div>

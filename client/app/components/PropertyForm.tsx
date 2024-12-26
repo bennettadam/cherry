@@ -4,6 +4,7 @@ import { PropertyConfiguration, PropertyType } from '~/models/types'
 import { Route } from '~/utility/Routes'
 import { SelectDropdown } from './SelectDropdown'
 import { Tools } from '../utility/Tools'
+import { ErrorMessage } from './ErrorMessage'
 
 export interface PropertyFormData extends Record<string, any> {
 	title: string
@@ -13,12 +14,18 @@ export interface PropertyFormData extends Record<string, any> {
 	selectOptions?: string[]
 }
 
+// Add FormMode enum
+export enum PropertyFormMode {
+	create = 'create',
+	edit = 'edit',
+}
+
 interface PropertyFormProps {
 	defaultValues?: PropertyConfiguration
 	error?: string
 	onSubmit: (data: PropertyFormData) => void
 	submitLabel: string
-	allowTypeEdit?: boolean
+	mode: PropertyFormMode
 	onDelete?: () => void
 }
 
@@ -56,7 +63,7 @@ export default function PropertyForm({
 	error,
 	onSubmit,
 	submitLabel,
-	allowTypeEdit = true,
+	mode,
 	onDelete,
 }: PropertyFormProps) {
 	const [
@@ -116,7 +123,7 @@ export default function PropertyForm({
 		const formData = new FormData(form)
 		const data: PropertyFormData = {
 			title: formData.get('title') as string,
-			propertyType: formData.get('propertyType') as PropertyType,
+			propertyType: selectedType,
 			isRequired: formData.get('isRequired') === 'true',
 			defaultValue: getDefaultValueForType(),
 			selectOptions:
@@ -255,14 +262,10 @@ export default function PropertyForm({
 	}
 
 	return (
-		<Form onSubmit={handleSubmit}>
-			{error && (
-				<div className="mb-4 rounded-md bg-red-50 p-4 text-red-600">
-					{error}
-				</div>
-			)}
+		<Form onSubmit={handleSubmit} className="space-y-6">
+			{error && <ErrorMessage message={error} />}
 
-			<div className="mb-6">
+			<div>
 				<label
 					htmlFor="title"
 					className="block text-sm font-medium text-gray-700"
@@ -279,7 +282,7 @@ export default function PropertyForm({
 				/>
 			</div>
 
-			<div className="mb-6">
+			<div>
 				<div className="flex items-center">
 					<input
 						type="checkbox"
@@ -299,7 +302,7 @@ export default function PropertyForm({
 				</div>
 			</div>
 
-			<div className="mb-6">
+			<div>
 				<div className="flex items-center gap-1">
 					<label
 						htmlFor="propertyType"
@@ -307,7 +310,7 @@ export default function PropertyForm({
 					>
 						Type
 					</label>
-					{!allowTypeEdit && (
+					{mode === PropertyFormMode.edit && (
 						<div className="group relative">
 							<span className="cursor-help text-gray-400">
 								<svg
@@ -331,31 +334,24 @@ export default function PropertyForm({
 						</div>
 					)}
 				</div>
-				{allowTypeEdit ? (
-					<>
-						<input
-							type="hidden"
-							name="propertyType"
-							value={selectedType}
-						/>
-						<SelectDropdown
-							options={propertyTypeOptions.map((opt) => opt.label)}
-							value={
-								propertyTypeOptions.find(
-									(opt) => opt.value === selectedType
-								)?.label
+				{mode === PropertyFormMode.create ? (
+					<SelectDropdown
+						options={propertyTypeOptions.map((opt) => opt.label)}
+						value={
+							propertyTypeOptions.find(
+								(opt) => opt.value === selectedType
+							)?.label
+						}
+						onChange={(label) => {
+							const option = propertyTypeOptions.find(
+								(opt) => opt.label === label
+							)
+							if (option) {
+								setSelectedType(option.value)
 							}
-							onChange={(label) => {
-								const option = propertyTypeOptions.find(
-									(opt) => opt.label === label
-								)
-								if (option) {
-									setSelectedType(option.value)
-								}
-							}}
-							placeholder="Select a type"
-						/>
-					</>
+						}}
+						placeholder="Select a type"
+					/>
 				) : (
 					<input
 						type="text"
@@ -367,7 +363,7 @@ export default function PropertyForm({
 			</div>
 
 			{selectedType === PropertyType.singleSelectList ? (
-				<div className="mb-6">
+				<div>
 					<div className="flex gap-6">
 						<div className="flex-1">
 							<div className="flex items-center mb-2">
@@ -438,7 +434,7 @@ export default function PropertyForm({
 					</div>
 				</div>
 			) : (
-				<div className="mb-6">
+				<div>
 					<label className="block text-sm font-medium text-gray-700">
 						Default Value
 					</label>

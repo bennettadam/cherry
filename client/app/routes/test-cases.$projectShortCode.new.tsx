@@ -9,57 +9,36 @@ import {
 	useNavigate,
 	useLoaderData,
 	useSubmit,
+	useOutletContext,
+	useActionData,
 } from '@remix-run/react'
 import { APIRoute, Route } from '~/utility/Routes'
 import { TestCaseForm, TestCaseFormMode } from '~/components/TestCaseForm'
-import { FetchResponse, PropertyConfiguration } from '~/models/types'
-
-export async function loader({ params }: LoaderFunctionArgs) {
-	const propertiesResponse = await fetch(APIRoute.properties, {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-	})
-
-	if (!propertiesResponse.ok) {
-		throw new Error('Failed to fetch properties')
-	}
-
-	const properties = (await propertiesResponse.json()) as FetchResponse<
-		PropertyConfiguration[]
-	>
-	return { properties: properties.data }
-}
+import { ProjectTestCasesOutletContext, ErrorResponse } from '~/models/types'
+import { APIClient } from '~/utility/APIClient'
+import { Tools } from '~/utility/Tools'
 
 export async function action({ request, params }: ActionFunctionArgs) {
-	const projectShortCode = params.projectShortCode
-	if (!projectShortCode) {
-		throw new Response('Project short code is required', { status: 400 })
-	}
+	try {
+		const projectShortCode = params.projectShortCode
+		if (!projectShortCode) {
+			throw 'Project short code is required'
+		}
 
-	const response = await fetch(APIRoute.projectTestCases(projectShortCode), {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: await request.text(),
-	})
-
-	if (!response.ok) {
-		throw new Response('Failed to create test case', {
-			status: response.status,
+		await APIClient.post(APIRoute.projectTestCases(projectShortCode), {
+			body: await request.json(),
 		})
+		return redirect(Route.viewProjectTestCases(projectShortCode))
+	} catch (error) {
+		return Response.json(Tools.mapErrorToResponse(error), { status: 400 })
 	}
-
-	return redirect(Route.viewProjectTestCases(projectShortCode))
 }
 
 export default function NewTestCase() {
+	const { properties } = useOutletContext<ProjectTestCasesOutletContext>()
 	const navigate = useNavigate()
 	const submit = useSubmit()
-
-	const { properties } = useLoaderData<typeof loader>()
+	const actionData = useActionData<ErrorResponse>()
 
 	return (
 		<div>
@@ -79,6 +58,7 @@ export default function NewTestCase() {
 							encType: 'application/json',
 						})
 					}}
+					error={actionData?.message}
 				/>
 			</div>
 		</div>

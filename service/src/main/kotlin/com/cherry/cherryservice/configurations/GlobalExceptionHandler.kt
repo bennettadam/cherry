@@ -12,7 +12,7 @@ class GlobalExceptionHandler {
     fun handleValidationException(ex: IllegalArgumentException): ResponseEntity<ErrorResponse> {
         return ResponseEntity.badRequest().body(ErrorResponse(
             error = "Validation Error",
-            message = ex.message
+            message = ex.message ?: "An error occurred"
         ))
     }
 }

@@ -3,6 +3,7 @@ import {
 	TestCase,
 	PropertyValue,
 	PropertyType,
+	ErrorResponse,
 } from '~/models/types'
 import { Project } from '../models/project'
 
@@ -39,6 +40,24 @@ export class Tools {
 				return 'Option select'
 			default:
 				return 'Unknown'
+		}
+	}
+
+	static mapErrorToResponse(error: unknown): ErrorResponse {
+		if (error instanceof Error) {
+			return {
+				message: error.message,
+			}
+		}
+
+		if (typeof error === 'string') {
+			return {
+				message: error,
+			}
+		}
+
+		return {
+			message: 'An unknown error occurred',
 		}
 	}
 }

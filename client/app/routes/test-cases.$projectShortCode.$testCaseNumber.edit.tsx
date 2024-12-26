@@ -1,46 +1,54 @@
-import { type ActionFunctionArgs, redirect } from '@remix-run/node'
-import { useNavigate, useOutletContext, useSubmit } from '@remix-run/react'
+import { type ActionFunctionArgs, redirect, json } from '@remix-run/node'
+import {
+	useActionData,
+	useNavigate,
+	useOutletContext,
+	useSubmit,
+} from '@remix-run/react'
 import { APIRoute, Route } from '~/utility/Routes'
 import { TestCaseForm, TestCaseFormMode } from '~/components/TestCaseForm'
 import {
 	CreateTestCase,
-	ProjectTestCasesOutletContext,
+	ErrorResponse,
 	TestCaseOutletContext,
 } from '~/models/types'
+import { APIClient } from '~/utility/APIClient'
+import { Tools } from '~/utility/Tools'
 
 export async function action({ request, params }: ActionFunctionArgs) {
-	const projectShortCode = params.projectShortCode
-	const testCaseNumber = Number(params.testCaseNumber)
-	if (!projectShortCode) {
-		throw new Response('Project short code is required', { status: 400 })
-	}
-	if (!testCaseNumber) {
-		throw new Response('Test case number is required', { status: 400 })
-	}
+	try {
+		const projectShortCode = params.projectShortCode
+		const testCaseNumber = Number(params.testCaseNumber)
+		if (!projectShortCode) {
+			throw 'Project short code is required'
+		}
+		if (!testCaseNumber) {
+			throw 'Test case number is required'
+		}
 
-	const { testCaseID, testCaseUpdate } = await request.json()
-	const response = await fetch(APIRoute.testCase(testCaseID), {
-		method: 'PUT',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify(testCaseUpdate),
-	})
-
-	if (!response.ok) {
-		throw new Response('Failed to update test case', {
-			status: response.status,
-		})
+		if (request.method === 'DELETE') {
+			const { testCaseID } = await request.json()
+			await APIClient.delete(APIRoute.testCase(testCaseID))
+			return redirect(Route.viewProjectTestCases(projectShortCode))
+		} else if (request.method === 'PUT') {
+			const { testCaseID, testCaseUpdate } = await request.json()
+			await APIClient.put(APIRoute.testCase(testCaseID), {
+				body: testCaseUpdate,
+			})
+			return redirect(Route.viewTestCase(projectShortCode, testCaseNumber))
+		} else {
+			throw 'Invalid request method'
+		}
+	} catch (error) {
+		return Response.json(Tools.mapErrorToResponse(error), { status: 400 })
 	}
-
-	return redirect(Route.viewTestCase(projectShortCode, testCaseNumber))
 }
 
 export default function EditTestCase() {
 	const navigate = useNavigate()
 	const submit = useSubmit()
-
 	const { testCase, properties } = useOutletContext<TestCaseOutletContext>()
+	const actionData = useActionData<ErrorResponse>()
 
 	function handleSubmit(testCaseUpdate: CreateTestCase) {
 		submit(
@@ -49,10 +57,19 @@ export default function EditTestCase() {
 				testCaseUpdate,
 			},
 			{
-				method: 'POST',
+				method: 'PUT',
 				encType: 'application/json',
 			}
 		)
+	}
+
+	async function handleDelete() {
+		if (confirm('Are you sure you want to delete this test case?')) {
+			submit(
+				{ testCaseID: testCase.testCaseID },
+				{ method: 'DELETE', encType: 'application/json' }
+			)
+		}
 	}
 
 	return (
@@ -69,6 +86,8 @@ export default function EditTestCase() {
 				mode={TestCaseFormMode.edit}
 				onCancel={() => navigate('..')}
 				onSubmit={handleSubmit}
+				error={actionData?.message}
+				onDelete={handleDelete}
 			/>
 		</div>
 	)
