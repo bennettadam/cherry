@@ -26,7 +26,7 @@ export interface PropertyValue {
 export enum PropertyType {
 	text = 'TEXT',
 	number = 'NUMBER',
-	enum = 'ENUM',
+	singleSelectList = 'SINGLE_SELECT_LIST',
 }
 
 export enum PropertyConfigurationSource {
@@ -42,7 +42,7 @@ export interface PropertyConfiguration {
 	propertyType: PropertyType
 	isRequired: boolean
 	defaultValue?: string
-	enumOptions?: string[]
+	selectOptions?: string[]
 }
 
 export interface EnumConfiguration {
@@ -129,4 +129,12 @@ export interface ProjectTestCaseRunsOutletContext {
 export interface ErrorResponse {
 	error: string
 	message: string
+}
+
+export interface PropertyConfigurationOutletContext {
+	properties: PropertyConfiguration[]
+}
+
+export interface PropertyConfigurationDetailsOutletContext {
+	property: PropertyConfiguration
 }

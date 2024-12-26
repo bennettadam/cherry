@@ -1,8 +1,9 @@
 import { type LoaderFunctionArgs } from '@remix-run/node'
-import { useLoaderData } from '@remix-run/react'
+import { useLoaderData, useOutletContext } from '@remix-run/react'
 import { Link } from '@remix-run/react'
 import {
 	PropertyConfiguration,
+	PropertyConfigurationOutletContext,
 	PropertyConfigurationResponse,
 } from '~/models/types'
 import { APIRoute } from '~/utility/Routes'
@@ -10,23 +11,8 @@ import { Table, type Column } from '~/components/Table'
 import { useNavigate } from '@remix-run/react'
 import { Tools } from '~/utility/Tools'
 
-export async function loader({}: LoaderFunctionArgs) {
-	const response = await fetch(APIRoute.properties, {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-	})
-
-	if (!response.ok) {
-		throw new Error('Failed to fetch properties')
-	}
-
-	return (await response.json()) as PropertyConfigurationResponse
-}
-
 export default function ConfigurationProperties() {
-	const { data } = useLoaderData<typeof loader>()
+	const { properties } = useOutletContext<PropertyConfigurationOutletContext>()
 	const navigate = useNavigate()
 
 	const columns: Column<PropertyConfiguration>[] = [
@@ -39,7 +25,7 @@ export default function ConfigurationProperties() {
 			header: 'Type',
 			key: 'propertyType',
 			render: (property) =>
-				Tools.capitalizeFirstLetter(property.propertyType),
+				Tools.propertyTypeToDisplayText(property.propertyType),
 		},
 		{
 			header: 'Default Value',
@@ -70,10 +56,10 @@ export default function ConfigurationProperties() {
 			</div>
 
 			<Table
-				data={data}
+				data={properties}
 				columns={columns}
 				onRowClick={(property) =>
-					navigate(`${property.propertyConfigurationID}/edit`)
+					navigate(property.propertyConfigurationID.toString())
 				}
 			/>
 		</div>

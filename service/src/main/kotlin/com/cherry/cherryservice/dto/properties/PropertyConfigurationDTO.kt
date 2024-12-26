@@ -1,4 +1,4 @@
-package com.cherry.cherryservice.dto
+package com.cherry.cherryservice.dto.properties
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.util.Date
@@ -13,5 +13,5 @@ data class PropertyConfigurationDTO(
     @JsonProperty("isRequired")
     val isRequired: Boolean,
     val defaultValue: String?,
-    val enumOptions: List<String>?
+    val selectOptions: List<String>?
 )

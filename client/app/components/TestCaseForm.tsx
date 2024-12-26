@@ -140,10 +140,10 @@ export function TestCaseForm({
 									placeholder={`Enter ${property.title}`}
 								/>
 							)}
-							{property.propertyType === PropertyType.enum &&
-								property.enumOptions && (
+							{property.propertyType === PropertyType.singleSelectList &&
+								property.selectOptions && (
 									<SelectDropdown
-										options={property.enumOptions}
+										options={property.selectOptions}
 										value={
 											propertyValues[
 												property.propertyConfigurationID

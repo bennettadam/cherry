@@ -1,6 +1,5 @@
 package com.cherry.cherryservice.models
 
-import com.cherry.cherryservice.dto.PropertyConfigurationSource
 import com.cherry.cherryservice.dto.testruns.TestRunDTO
 import com.cherry.cherryservice.dto.testruns.TestRunStatus
 import jakarta.persistence.*

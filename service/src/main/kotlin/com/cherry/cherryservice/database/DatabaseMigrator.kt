@@ -1,7 +1,7 @@
 package com.cherry.cherryservice.database
 
-import com.cherry.cherryservice.dto.PropertyConfigurationSource
-import com.cherry.cherryservice.dto.PropertyConfigurationType
+import com.cherry.cherryservice.dto.properties.PropertyConfigurationSource
+import com.cherry.cherryservice.dto.properties.PropertyConfigurationType
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.queryForObject
 
@@ -82,7 +82,7 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
                             property_type TEXT NOT NULL,
                             is_required BOOLEAN NOT NULL,
                             default_value TEXT,
-                            enum_options TEXT[]
+                            select_options TEXT[]
                         );
                     """.trimIndent())
 
@@ -131,19 +131,19 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
                     """.trimIndent())
 
                     val criticalText = "Critical"
-                    jdbcTemplate.update("INSERT INTO property_configurations (source, title, property_type, is_required, default_value, enum_options) VALUES (?, ?, ?, ?, ?, ?);",
+                    jdbcTemplate.update("INSERT INTO property_configurations (source, title, property_type, is_required, default_value, select_options) VALUES (?, ?, ?, ?, ?, ?);",
                         PropertyConfigurationSource.SYSTEM.toString(),
                         "Priority",
-                        PropertyConfigurationType.ENUM.toString(),
+                        PropertyConfigurationType.SINGLE_SELECT_LIST.toString(),
                         true,
                         criticalText,
                         arrayOf(criticalText, "High", "Medium", "Low"))
 
                     val otherText = "Other"
-                    jdbcTemplate.update("INSERT INTO property_configurations (source, title, property_type, is_required, default_value, enum_options) VALUES (?, ?, ?, ?, ?, ?);",
+                    jdbcTemplate.update("INSERT INTO property_configurations (source, title, property_type, is_required, default_value, select_options) VALUES (?, ?, ?, ?, ?, ?);",
                         PropertyConfigurationSource.SYSTEM.toString(),
                         "Type",
-                        PropertyConfigurationType.ENUM.toString(),
+                        PropertyConfigurationType.SINGLE_SELECT_LIST.toString(),
                         true,
                         otherText,
                         arrayOf(otherText, "Functional", "Smoke", "Exploratory"))

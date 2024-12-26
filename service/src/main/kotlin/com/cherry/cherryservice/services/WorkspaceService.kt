@@ -3,6 +3,7 @@ package com.cherry.cherryservice.services
 import com.cherry.cherryservice.dto.*
 import com.cherry.cherryservice.dto.projects.CreateWorkspaceProjectDTO
 import com.cherry.cherryservice.dto.projects.WorkspaceProjectDTO
+import com.cherry.cherryservice.dto.properties.*
 import com.cherry.cherryservice.dto.testcases.CreateTestCaseDTO
 import com.cherry.cherryservice.dto.testcases.TestCaseDTO
 import com.cherry.cherryservice.dto.testruns.*
@@ -116,9 +117,9 @@ class WorkspaceService(
                     // todo: verify real number
                     propertyValue = inputPropertyValue
                 }
-                PropertyConfigurationType.ENUM -> {
-                    val enumOptions = propertyConfigurationModel.enumOptions ?: emptyList()
-                    require(enumOptions.contains(inputPropertyValue)) { "Unrecognized enum option" }
+                PropertyConfigurationType.SINGLE_SELECT_LIST -> {
+                    val selectOptions = propertyConfigurationModel.selectOptions ?: emptyList()
+                    require(selectOptions.contains(inputPropertyValue)) { "Unrecognized enum option" }
                     propertyValue = inputPropertyValue
                 }
             }
@@ -152,7 +153,7 @@ class WorkspaceService(
                     model.title = property.title
                     model.isRequired = property.isRequired
                     model.defaultValue = property.defaultValue
-                    model.enumOptions = property.enumOptions
+                    model.selectOptions = property.selectOptions
                 }
             }
 
@@ -165,8 +166,8 @@ class WorkspaceService(
 
     @Transactional
     fun createProperty(property: CreatePropertyConfigurationDTO) {
-        if (property.propertyType == PropertyConfigurationType.ENUM) {
-            requireNotNull(property.enumOptions) { "Missing enum configuration" }
+        if (property.propertyType == PropertyConfigurationType.SINGLE_SELECT_LIST) {
+            requireNotNull(property.selectOptions) { "Missing select options configuration" }
         }
 
         if (property.isRequired) {
@@ -179,7 +180,7 @@ class WorkspaceService(
             propertyType = property.propertyType,
             isRequired = property.isRequired,
             defaultValue = property.defaultValue,
-            enumOptions = property.enumOptions
+            selectOptions = property.selectOptions
         )
 
         propertyConfigurationRepository.save(newModel)

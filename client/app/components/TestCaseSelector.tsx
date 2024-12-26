@@ -162,7 +162,7 @@ export default function TestCaseSelector({
 								value={selectedFilters[propertyID] || ''}
 							>
 								<option value="">Any</option>
-								{property.enumOptions?.map((option) => (
+								{property.selectOptions?.map((option) => (
 									<option key={option} value={option}>
 										{option}
 									</option>

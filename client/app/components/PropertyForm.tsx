@@ -2,13 +2,15 @@ import { Form, Link } from '@remix-run/react'
 import { useState } from 'react'
 import { PropertyConfiguration, PropertyType } from '~/models/types'
 import { Route } from '~/utility/Routes'
+import { SelectDropdown } from './SelectDropdown'
+import { Tools } from '../utility/Tools'
 
 export interface PropertyFormData extends Record<string, any> {
 	title: string
 	propertyType: PropertyType
 	isRequired: boolean
 	defaultValue?: string
-	enumOptions?: string[]
+	selectOptions?: string[]
 }
 
 interface PropertyFormProps {
@@ -20,6 +22,35 @@ interface PropertyFormProps {
 	onDelete?: () => void
 }
 
+// Change interface name
+interface SelectOption {
+	id: string
+	value: string
+}
+
+const createInitialSelectState = (
+	selectOptions?: string[],
+	defaultValue?: string
+): { options: SelectOption[]; defaultId?: string } => {
+	if (!selectOptions?.length) {
+		return {
+			options: [{ id: crypto.randomUUID(), value: '' }],
+			defaultId: undefined,
+		}
+	}
+
+	const options = selectOptions.map((value) => ({
+		id: crypto.randomUUID(),
+		value,
+	}))
+
+	const defaultId = defaultValue
+		? options.find((opt) => opt.value === defaultValue)?.id
+		: undefined
+
+	return { options, defaultId }
+}
+
 export default function PropertyForm({
 	defaultValues,
 	error,
@@ -28,26 +59,54 @@ export default function PropertyForm({
 	allowTypeEdit = true,
 	onDelete,
 }: PropertyFormProps) {
+	const [
+		{ options: selectOptions, defaultId: selectedDefaultValueId },
+		setSelectState,
+	] = useState(() =>
+		createInitialSelectState(
+			defaultValues?.selectOptions,
+			defaultValues?.defaultValue
+		)
+	)
+
+	// Rename setters
+	const setSelectOptions = (newOptions: SelectOption[]) =>
+		setSelectState((state) => ({ ...state, options: newOptions }))
+
+	const setSelectedDefaultValueId = (newId: string | undefined) =>
+		setSelectState((state) => ({ ...state, defaultId: newId }))
+
 	const [selectedType, setSelectedType] = useState<PropertyType>(
 		defaultValues?.propertyType || PropertyType.text
 	)
-	const [enumOptions, setEnumOptions] = useState<string[]>(
-		defaultValues?.enumOptions || ['']
+	const [isRequired, setIsRequired] = useState<boolean>(
+		defaultValues?.isRequired ?? false
+	)
+	const [textDefaultValue, setTextDefaultValue] = useState<string>(
+		defaultValues?.defaultValue || ''
 	)
 
 	const addOption = () => {
-		setEnumOptions([...enumOptions, ''])
+		setSelectOptions([
+			...selectOptions,
+			{ id: crypto.randomUUID(), value: '' },
+		])
 	}
 
-	const updateOption = (index: number, value: string) => {
-		const newOptions = [...enumOptions]
-		newOptions[index] = value
-		setEnumOptions(newOptions)
+	const updateOption = (id: string, value: string) => {
+		setSelectOptions(
+			selectOptions.map((opt) => (opt.id === id ? { ...opt, value } : opt))
+		)
 	}
 
-	const deleteOption = (indexToDelete: number) => {
-		if (enumOptions.length <= 1) return
-		setEnumOptions(enumOptions.filter((_, index) => index !== indexToDelete))
+	const deleteOption = (idToDelete: string) => {
+		if (selectOptions.length <= 1) return
+		setSelectOptions(selectOptions.filter((opt) => opt.id !== idToDelete))
+
+		// Clear the default value if the deleted option was selected
+		if (idToDelete === selectedDefaultValueId) {
+			setSelectedDefaultValueId(undefined)
+		}
 	}
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -59,20 +118,144 @@ export default function PropertyForm({
 			title: formData.get('title') as string,
 			propertyType: formData.get('propertyType') as PropertyType,
 			isRequired: formData.get('isRequired') === 'true',
-			defaultValue: (formData.get('defaultValue') as string) || undefined,
-			enumOptions:
-				selectedType === PropertyType.enum
-					? enumOptions
-							.map((opt) => opt.trim())
-							.filter((opt) => opt !== '')
+			defaultValue: getDefaultValueForType(),
+			selectOptions:
+				selectedType === PropertyType.singleSelectList
+					? selectOptions
+							.filter((opt) => opt.value.trim() !== '')
+							.map((opt) => opt.value)
 					: undefined,
 		}
 
 		onSubmit(data)
 	}
 
+	const getDefaultValueForType = () => {
+		switch (selectedType) {
+			case PropertyType.singleSelectList:
+				return selectOptions.find(
+					(opt) => opt.id === selectedDefaultValueId
+				)?.value
+			case PropertyType.text:
+			case PropertyType.number:
+				return textDefaultValue || undefined
+			default:
+				return undefined
+		}
+	}
+
+	const renderDefaultValueInput = () => {
+		switch (selectedType) {
+			case PropertyType.singleSelectList:
+				return (
+					<SelectDropdown
+						options={getDefaultValueOptions()}
+						value={getCurrentDefaultValue()}
+						onChange={handleDefaultValueChange}
+						placeholder={
+							isRequired
+								? 'Select a default value'
+								: 'Select a default value (optional)'
+						}
+					/>
+				)
+			case PropertyType.text:
+				return (
+					<input
+						type="text"
+						value={textDefaultValue}
+						onChange={(e) => setTextDefaultValue(e.target.value)}
+						placeholder={
+							isRequired
+								? 'Enter default value'
+								: 'Enter default value (optional)'
+						}
+						className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+					/>
+				)
+			case PropertyType.number:
+				return (
+					<input
+						type="number"
+						value={textDefaultValue}
+						onChange={(e) => setTextDefaultValue(e.target.value)}
+						placeholder={
+							isRequired
+								? 'Enter default value'
+								: 'Enter default value (optional)'
+						}
+						className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+					/>
+				)
+			default:
+				return null
+		}
+	}
+
+	const handleRequiredChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const newIsRequired = e.target.checked
+		setIsRequired(newIsRequired)
+
+		if (
+			newIsRequired &&
+			selectedDefaultValueId === undefined &&
+			selectedType === PropertyType.singleSelectList
+		) {
+			const firstValidOption = selectOptions.find(
+				(opt) => opt.value.trim() !== ''
+			)
+			setSelectedDefaultValueId(firstValidOption?.id)
+		}
+	}
+
+	const propertyTypeOptions = [
+		{
+			value: PropertyType.text,
+			label: Tools.propertyTypeToDisplayText(PropertyType.text),
+		},
+		{
+			value: PropertyType.number,
+			label: Tools.propertyTypeToDisplayText(PropertyType.number),
+		},
+		{
+			value: PropertyType.singleSelectList,
+			label: Tools.propertyTypeToDisplayText(PropertyType.singleSelectList),
+		},
+	]
+
+	const getDefaultValueOptions = () => {
+		const validSelectOptions = selectOptions
+			.filter((opt) => opt.value.trim() !== '')
+			.map((opt) => opt.value)
+
+		return isRequired
+			? validSelectOptions
+			: ['No default value', ...validSelectOptions]
+	}
+
+	const getCurrentDefaultValue = () => {
+		if (selectedDefaultValueId === undefined) {
+			return isRequired ? '' : 'No default value'
+		}
+
+		return (
+			selectOptions.find((opt) => opt.id === selectedDefaultValueId)
+				?.value || ''
+		)
+	}
+
+	const handleDefaultValueChange = (value: string) => {
+		if (value === 'No default value') {
+			setSelectedDefaultValueId(undefined)
+			return
+		}
+
+		const selectedOption = selectOptions.find((opt) => opt.value === value)
+		setSelectedDefaultValueId(selectedOption?.id)
+	}
+
 	return (
-		<Form onSubmit={handleSubmit} className="max-w-2xl">
+		<Form onSubmit={handleSubmit}>
 			{error && (
 				<div className="mb-4 rounded-md bg-red-50 p-4 text-red-600">
 					{error}
@@ -103,7 +286,8 @@ export default function PropertyForm({
 						name="isRequired"
 						id="isRequired"
 						value="true"
-						defaultChecked={defaultValues?.isRequired}
+						checked={isRequired}
+						onChange={handleRequiredChange}
 						className="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500"
 					/>
 					<label
@@ -148,105 +332,119 @@ export default function PropertyForm({
 					)}
 				</div>
 				{allowTypeEdit ? (
-					<select
-						name="propertyType"
-						id="propertyType"
-						required
-						className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-						onChange={(e) =>
-							setSelectedType(e.target.value as PropertyType)
-						}
-						value={selectedType}
-					>
-						<option value={PropertyType.text}>Text</option>
-						<option value={PropertyType.number}>Number</option>
-						<option value={PropertyType.enum}>Enum</option>
-					</select>
+					<>
+						<input
+							type="hidden"
+							name="propertyType"
+							value={selectedType}
+						/>
+						<SelectDropdown
+							options={propertyTypeOptions.map((opt) => opt.label)}
+							value={
+								propertyTypeOptions.find(
+									(opt) => opt.value === selectedType
+								)?.label
+							}
+							onChange={(label) => {
+								const option = propertyTypeOptions.find(
+									(opt) => opt.label === label
+								)
+								if (option) {
+									setSelectedType(option.value)
+								}
+							}}
+							placeholder="Select a type"
+						/>
+					</>
 				) : (
 					<input
 						type="text"
 						readOnly
-						value={selectedType}
+						value={Tools.propertyTypeToDisplayText(selectedType)}
 						className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900"
 					/>
 				)}
 			</div>
 
-			{selectedType === PropertyType.enum && (
-				<div className="mb-6 space-y-4">
-					<div className="flex items-center justify-between">
-						<label className="block text-sm font-medium text-gray-700">
-							Options
-						</label>
-						<button
-							type="button"
-							onClick={addOption}
-							className="rounded-md bg-sky-600 px-2 py-1 text-sm font-medium text-white hover:bg-sky-700"
-						>
-							+ Add Option
-						</button>
-					</div>
-					{enumOptions.map((option, index) => (
-						<div key={index} className="flex gap-2">
-							<input
-								type="text"
-								name={`propertyOptions[${index}]`}
-								value={option}
-								onChange={(e) => updateOption(index, e.target.value)}
-								required
-								placeholder={`Option ${index + 1}`}
-								className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-							/>
-							<button
-								type="button"
-								onClick={() => deleteOption(index)}
-								disabled={enumOptions.length <= 1}
-								className={`mt-1 rounded-md border px-2 ${
-									enumOptions.length <= 1
-										? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'
-										: 'border-red-300 text-red-600 bg-white hover:bg-red-50'
-								}`}
-							>
-								×
-							</button>
+			{selectedType === PropertyType.singleSelectList ? (
+				<div className="mb-6">
+					<div className="flex gap-6">
+						<div className="flex-1">
+							<div className="flex items-center mb-2">
+								<div className="flex flex-grow items-center justify-between gap-4">
+									<label className="block text-sm font-medium text-gray-700">
+										Options
+									</label>
+									<button
+										type="button"
+										onClick={addOption}
+										className="rounded-md bg-sky-600 px-2 py-1 text-sm font-medium text-white hover:bg-sky-700"
+									>
+										+ Add Option
+									</button>
+								</div>
+							</div>
+							<div className="divide-y divide-gray-300">
+								{selectOptions.map((option, index) => (
+									<div key={option.id} className="flex items-center">
+										<div className="flex flex-grow items-center hover:bg-gray-50 hover:rounded-xl focus-within:bg-gray-50 focus-within:rounded-xl m-0.5">
+											<div className="flex-grow">
+												<input
+													type="text"
+													value={option.value}
+													onChange={(e) =>
+														updateOption(
+															option.id,
+															e.target.value
+														)
+													}
+													required
+													placeholder={`Option ${index + 1}`}
+													className="w-full border-0 px-4 py-2 focus:ring-0 focus:outline-none bg-transparent"
+												/>
+											</div>
+											<button
+												type="button"
+												onClick={() => deleteOption(option.id)}
+												disabled={selectOptions.length <= 1}
+												className={`mr-4 p-1 rounded-md ${
+													selectOptions.length <= 1
+														? 'text-gray-400 cursor-not-allowed'
+														: 'text-gray-500 hover:bg-gray-100 hover:text-red-600'
+												}`}
+											>
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													viewBox="0 0 20 20"
+													fill="currentColor"
+													className="w-4 h-4"
+												>
+													<path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+												</svg>
+											</button>
+										</div>
+									</div>
+								))}
+							</div>
 						</div>
-					))}
+						<div className="w-64">
+							<div className="mb-2">
+								<label className="block text-sm font-medium text-gray-700">
+									Default Value
+								</label>
+							</div>
+							{renderDefaultValueInput()}
+						</div>
+					</div>
+				</div>
+			) : (
+				<div className="mb-6">
+					<label className="block text-sm font-medium text-gray-700">
+						Default Value
+					</label>
+					{renderDefaultValueInput()}
 				</div>
 			)}
-
-			<div className="mb-6">
-				<label
-					htmlFor="defaultValue"
-					className="block text-sm font-medium text-gray-700"
-				>
-					Default Value
-				</label>
-				{selectedType === PropertyType.enum ? (
-					<select
-						name="defaultValue"
-						id="defaultValue"
-						defaultValue={defaultValues?.defaultValue}
-						className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-					>
-						<option value="">Select a default value</option>
-						{enumOptions
-							.filter((option) => option.trim() !== '')
-							.map((option, index) => (
-								<option key={index} value={option}>
-									{option}
-								</option>
-							))}
-					</select>
-				) : (
-					<input
-						type="text"
-						name="defaultValue"
-						id="defaultValue"
-						defaultValue={defaultValues?.defaultValue}
-						className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-					/>
-				)}
-			</div>
 
 			<div className="flex justify-end gap-4">
 				{onDelete && (
@@ -259,7 +457,7 @@ export default function PropertyForm({
 					</button>
 				)}
 				<Link
-					to={Route.viewProperties}
+					to=".."
 					className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
 				>
 					Cancel

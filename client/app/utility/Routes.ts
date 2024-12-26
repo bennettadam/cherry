@@ -18,6 +18,10 @@ export class Route {
 	static get viewProperties() {
 		return '/configuration/properties'
 	}
+
+	static viewProperty(propertyID: string) {
+		return `/configuration/properties/${propertyID}`
+	}
 }
 
 export class APIRoute {

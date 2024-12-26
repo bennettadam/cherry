@@ -10,6 +10,7 @@ import { Table, type Column } from '~/components/Table'
 import type { TestCaseRun } from '~/models/types'
 import { Tools } from '~/utility/Tools'
 import { BackButton } from '~/components/BackButton'
+import { DateDisplay } from '../components/DateDisplay'
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const projectShortCode = params.projectShortCode
@@ -175,8 +176,9 @@ export default function TestRunDetails() {
 		{
 			header: 'Created',
 			key: 'created',
-			render: (testCaseRun) =>
-				new Date(testCaseRun.creationDate).toLocaleString(),
+			render: (testCaseRun) => (
+				<DateDisplay date={testCaseRun.creationDate} />
+			),
 		},
 	]
 

@@ -1,9 +1,8 @@
 package com.cherry.cherryservice.models
 
-import com.cherry.cherryservice.dto.EnumConfiguration
-import com.cherry.cherryservice.dto.PropertyConfigurationDTO
-import com.cherry.cherryservice.dto.PropertyConfigurationSource
-import com.cherry.cherryservice.dto.PropertyConfigurationType
+import com.cherry.cherryservice.dto.properties.PropertyConfigurationDTO
+import com.cherry.cherryservice.dto.properties.PropertyConfigurationSource
+import com.cherry.cherryservice.dto.properties.PropertyConfigurationType
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.JdbcTypeCode
@@ -46,12 +45,12 @@ class PropertyConfiguration(
     @Column(name = "default_value", nullable = true)
     var defaultValue: String?,
 
-    @Column(name = "enum_options", nullable = true)
+    @Column(name = "select_options", nullable = true)
     @JdbcTypeCode(SqlTypes.ARRAY)
-    var enumOptions: List<String>?,
+    var selectOptions: List<String>?,
 ) {
 
     fun toDTO(): PropertyConfigurationDTO {
-        return PropertyConfigurationDTO(externalID, creationDate, source, title, propertyType, isRequired, defaultValue, enumOptions)
+        return PropertyConfigurationDTO(externalID, creationDate, source, title, propertyType, isRequired, defaultValue, selectOptions)
     }
 }

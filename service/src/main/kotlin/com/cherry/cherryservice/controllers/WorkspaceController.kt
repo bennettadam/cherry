@@ -2,13 +2,13 @@ package com.cherry.cherryservice.controllers
 
 import com.cherry.cherryservice.dto.*
 import com.cherry.cherryservice.dto.projects.CreateWorkspaceProjectDTO
+import com.cherry.cherryservice.dto.properties.CreatePropertyConfigurationDTO
+import com.cherry.cherryservice.dto.properties.UpdatePropertyConfigurationDTO
 import com.cherry.cherryservice.dto.testcases.CreateTestCaseDTO
-import com.cherry.cherryservice.dto.testcases.TestCaseDTO
 import com.cherry.cherryservice.dto.testruns.CreateTestRunDTO
 import com.cherry.cherryservice.dto.testruns.UpdateTestCaseRunDTO
 import com.cherry.cherryservice.dto.testruns.UpdateTestRunDTO
 import com.cherry.cherryservice.services.WorkspaceService
-import com.fasterxml.jackson.annotation.JsonProperty
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
@@ -71,24 +70,14 @@ class WorkspaceController(
 
     @PostMapping("/properties")
     fun createProperty(@RequestBody request: CreatePropertyConfigurationDTO): ResponseEntity<Any> {
-        try {
-            workspaceService.createProperty(request)
-            return ResponseEntity.ok("Success")
-        }
-        catch (e: IllegalArgumentException) {
-            return ResponseEntity.badRequest().body(e.message)
-        }
+        workspaceService.createProperty(request)
+        return ResponseEntity.ok("Success")
     }
 
     @DeleteMapping("/properties/{propertyConfigurationID}")
     fun deleteProperty(@PathVariable propertyConfigurationID: UUID): ResponseEntity<Any> {
-        try {
-            workspaceService.deleteProperty(propertyConfigurationID)
-            return ResponseEntity.ok("Success")
-        }
-        catch (e: IllegalArgumentException) {
-            return ResponseEntity.badRequest().body(e.message)
-        }
+        workspaceService.deleteProperty(propertyConfigurationID)
+        return ResponseEntity.ok("Success")
     }
 
     @GetMapping("/test-runs/{projectShortCode}")

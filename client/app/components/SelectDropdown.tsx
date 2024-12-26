@@ -36,8 +36,12 @@ export function SelectDropdown({
 		<div className="relative" ref={dropdownRef}>
 			<button
 				type="button"
-				onClick={() => setIsOpen(!isOpen)}
-				className="mt-2 w-full text-left rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 hover:bg-gray-100 flex items-center justify-between shadow-sm"
+				onClick={() => options.length > 0 && setIsOpen(!isOpen)}
+				className={`mt-2 w-full text-left rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 ${
+					options.length > 0
+						? 'hover:bg-gray-100'
+						: 'cursor-not-allowed bg-gray-50'
+				} flex items-center justify-between shadow-sm`}
 			>
 				<span className={`${!value ? 'text-gray-500' : 'text-gray-900'}`}>
 					{value || placeholder}
@@ -57,7 +61,7 @@ export function SelectDropdown({
 					/>
 				</svg>
 			</button>
-			{isOpen && (
+			{isOpen && options.length > 0 && (
 				<div className="absolute z-10 mt-1 w-full rounded-md bg-white shadow-lg border border-gray-200 overflow-hidden">
 					<div className="max-h-60 overflow-auto">
 						{options.map((option) => (
@@ -73,6 +77,13 @@ export function SelectDropdown({
 								{option}
 							</button>
 						))}
+					</div>
+				</div>
+			)}
+			{isOpen && options.length === 0 && (
+				<div className="absolute z-10 mt-1 w-full rounded-md bg-white shadow-lg border border-gray-200 overflow-hidden">
+					<div className="px-3 py-2 text-sm text-gray-500">
+						No options available
 					</div>
 				</div>
 			)}

@@ -3,38 +3,11 @@ import {
 	type LoaderFunctionArgs,
 	redirect,
 } from '@remix-run/node'
-import { useLoaderData, useActionData, useSubmit } from '@remix-run/react'
+import { useActionData, useOutletContext, useSubmit } from '@remix-run/react'
 import type { PropertyFormData } from '~/components/PropertyForm'
 import PropertyForm from '~/components/PropertyForm'
 import { APIRoute, Route } from '~/utility/Routes'
-import { PropertyConfigurationResponse } from '../models/types'
-
-export async function loader({ params }: LoaderFunctionArgs) {
-	const propertyID = params.propertyID
-	if (!propertyID) {
-		throw new Response('Property ID is required', { status: 400 })
-	}
-
-	const response = await fetch(APIRoute.properties, {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-	})
-
-	if (!response.ok) {
-		throw new Response('Failed to fetch properties', { status: 500 })
-	}
-
-	const { data } = (await response.json()) as PropertyConfigurationResponse
-	const property = data.find((p) => p.propertyConfigurationID === propertyID)
-
-	if (!property) {
-		throw new Response('Property not found', { status: 404 })
-	}
-
-	return { property }
-}
+import { PropertyConfigurationDetailsOutletContext } from '../models/types'
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const propertyID = params.propertyID
@@ -76,7 +49,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 				throw new Error('Failed to create property')
 			}
 
-			return redirect(Route.viewProperties)
+			return redirect(Route.viewProperty(propertyID))
 		} catch (error) {
 			return Response.json(
 				{ error: 'Failed to edit property' },
@@ -87,7 +60,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function EditProperty() {
-	const { property } = useLoaderData<typeof loader>()
+	const { property } =
+		useOutletContext<PropertyConfigurationDetailsOutletContext>()
 	const actionData = useActionData<typeof action>()
 	const submit = useSubmit()
 
@@ -102,6 +76,7 @@ export default function EditProperty() {
 			propertyConfigurationID: property.propertyConfigurationID,
 			...data,
 		}
+		data.selectOptions
 		submit(updateData, { method: 'post', encType: 'application/json' })
 	}
 

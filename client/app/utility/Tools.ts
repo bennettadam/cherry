@@ -1,4 +1,9 @@
-import { PropertyConfiguration, TestCase, PropertyValue } from '~/models/types'
+import {
+	PropertyConfiguration,
+	TestCase,
+	PropertyValue,
+	PropertyType,
+} from '~/models/types'
 import { Project } from '../models/project'
 
 export class Tools {
@@ -22,5 +27,18 @@ export class Tools {
 
 	static capitalizeFirstLetter(str: string): string {
 		return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
+	}
+
+	static propertyTypeToDisplayText(propertyType: PropertyType): string {
+		switch (propertyType) {
+			case PropertyType.text:
+				return 'Text'
+			case PropertyType.number:
+				return 'Number'
+			case PropertyType.singleSelectList:
+				return 'Option select'
+			default:
+				return 'Unknown'
+		}
 	}
 }
