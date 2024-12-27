@@ -19,6 +19,7 @@ import type {
 } from '~/models/types'
 import type { FetchResponse, UpdateRequestBody } from '~/models/types'
 import { useState } from 'react'
+import { APIClient } from '~/utility/APIClient'
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const projectShortCode = params.projectShortCode
@@ -31,17 +32,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	const { testRunID, testRunUpdate } = await request.json()
-	const response = await fetch(APIRoute.testRun(testRunID), {
-		method: 'PUT',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify(testRunUpdate),
+	await APIClient.put<void>(APIRoute.testRun(testRunID), {
+		body: testRunUpdate,
 	})
-
-	if (!response.ok) {
-		throw new Response('Failed to update test run', { status: 500 })
-	}
 
 	return redirect(Route.viewTestRun(projectShortCode, testRunNumber))
 }

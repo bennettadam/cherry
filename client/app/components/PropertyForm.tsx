@@ -302,7 +302,7 @@ export default function PropertyForm({
 				</div>
 			</div>
 
-			<div>
+			<div className="space-y-2">
 				<div className="flex items-center gap-1">
 					<label
 						htmlFor="propertyType"
@@ -357,7 +357,7 @@ export default function PropertyForm({
 						type="text"
 						readOnly
 						value={Tools.propertyTypeToDisplayText(selectedType)}
-						className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900"
+						className="block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900"
 					/>
 				)}
 			</div>

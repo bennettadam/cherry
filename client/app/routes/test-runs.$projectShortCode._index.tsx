@@ -45,7 +45,10 @@ export default function TestRunsIndex() {
 				</Link>
 			</div>
 			<Table
-				data={testRuns}
+				tableRows={testRuns.map((testRun) => ({
+					id: testRun.testRunID,
+					data: testRun,
+				}))}
 				columns={columns}
 				onRowClick={(testRun) => navigate(testRun.testRunNumber.toString())}
 			/>

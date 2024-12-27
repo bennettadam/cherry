@@ -261,6 +261,8 @@ class WorkspaceService(
         val project = projectRepository.findByProjectShortCode(projectShortCode)
         requireNotNull(project) { "No project found for id $projectShortCode" }
 
+        require(testRun.testCaseIDs.isNotEmpty()) { "There must be at least one test case for the test run" }
+
         // find the test run with the largest test run number and bump it up by 1
         val largestTestRunNumber = testRunRepository.findTopByProjectOrderByTestRunNumberDesc(project)?.testRunNumber ?: 0
         val newTestRun = TestRun(

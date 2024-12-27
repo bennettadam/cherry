@@ -1,35 +1,38 @@
 import { type ActionFunctionArgs } from '@remix-run/node'
-import { Link, useFetcher, useOutletContext, useParams } from '@remix-run/react'
+import {
+	Link,
+	useActionData,
+	useFetcher,
+	useOutletContext,
+	useParams,
+} from '@remix-run/react'
 import { APIRoute, Route } from '~/utility/Routes'
 import {
 	ProjectTestCaseRunsOutletContext,
 	TestCaseRunStatus,
+	ErrorResponse,
 } from '~/models/types'
 import { useState } from 'react'
 import { Tools } from '~/utility/Tools'
 import { BackButton } from '~/components/BackButton'
+import { APIClient } from '../utility/APIClient'
+import { ErrorMessage } from '../components/ErrorMessage'
 
 interface UpdateTestCaseRun extends Record<string, any> {
 	status: TestCaseRunStatus
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-	const { testCaseRunID, testCaseRunUpdate } = await request.json()
-	const response = await fetch(APIRoute.testCaseRun(testCaseRunID), {
-		method: 'PUT',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify(testCaseRunUpdate),
-	})
-
-	if (!response.ok) {
-		throw new Response('Failed to update test case status', {
-			status: 500,
+	try {
+		const { testCaseRunID, testCaseRunUpdate } = await request.json()
+		await APIClient.put<void>(APIRoute.testCaseRun(testCaseRunID), {
+			body: testCaseRunUpdate,
+		})
+	} catch (error) {
+		return Response.json(Tools.mapErrorToResponse(error), {
+			status: 400,
 		})
 	}
-
-	return { success: true }
 }
 
 export default function TestCaseRunDetails() {
@@ -47,6 +50,8 @@ export default function TestCaseRunDetails() {
 	if (!testCaseRun) {
 		return <p>Test case run not found</p>
 	}
+
+	const actionData = useActionData<ErrorResponse>()
 
 	const fetcher = useFetcher()
 	const [selectedStatus, setSelectedStatus] = useState<TestCaseRunStatus>(
@@ -94,6 +99,8 @@ export default function TestCaseRunDetails() {
 				</div>
 				<p className="mt-2 text-gray-600">Test Case Run Details</p>
 			</div>
+
+			{actionData && <ErrorMessage message={actionData.message} />}
 
 			<div className="space-y-8">
 				<section className="mt-6">

@@ -126,7 +126,7 @@ export interface ProjectTestCaseRunsOutletContext {
 	testCaseRuns: TestCaseRun[]
 }
 
-export interface ErrorResponse {
+export interface ErrorResponse extends Record<string, any> {
 	message: string
 }
 

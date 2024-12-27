@@ -9,14 +9,10 @@ import { Tools } from '~/utility/Tools'
 import { APIClient } from '../utility/APIClient'
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	try {
-		const fetchResponse = await APIClient.get<FetchResponse<Project[]>>(
-			APIRoute.projects
-		)
-		return fetchResponse
-	} catch (error) {
-		return Response.json(Tools.mapErrorToResponse(error), { status: 400 })
-	}
+	const fetchResponse = await APIClient.get<FetchResponse<Project[]>>(
+		APIRoute.projects
+	)
+	return fetchResponse
 }
 
 export default function Projects() {
@@ -57,7 +53,10 @@ export default function Projects() {
 				</div>
 
 				<Table
-					data={data}
+					tableRows={data.map((project) => ({
+						id: project.projectID,
+						data: project,
+					}))}
 					columns={columns}
 					onRowClick={(project) =>
 						navigate(Route.viewProjectTestCases(project.projectShortCode))

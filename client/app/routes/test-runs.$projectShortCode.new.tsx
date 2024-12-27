@@ -5,16 +5,24 @@ import {
 	useParams,
 	useLoaderData,
 	useSubmit,
+	useOutletContext,
+	useActionData,
 } from '@remix-run/react'
 import { APIRoute } from '~/utility/Routes'
 import { useState } from 'react'
 import type {
+	ErrorResponse,
 	FetchResponse,
+	ProjectTestRunsOutletContext,
 	PropertyConfiguration,
 	TestCase,
+	TestRun,
 } from '~/models/types'
 import TestCaseSelector from '~/components/TestCaseSelector'
 import { Route } from '~/utility/Routes'
+import { APIClient } from '~/utility/APIClient'
+import { Tools } from '../utility/Tools'
+import { ErrorMessage } from '../components/ErrorMessage'
 
 interface CreateTestRun extends Record<string, any> {
 	title: string
@@ -28,53 +36,41 @@ export async function loader({ params }: ActionFunctionArgs) {
 		throw new Response('Project short code is required', { status: 400 })
 	}
 
-	const [propertiesResponse, testCasesResponse] = await Promise.all([
-		fetch(APIRoute.properties),
-		fetch(APIRoute.projectTestCases(projectShortCode)),
+	const [properties, testCases] = await Promise.all([
+		APIClient.get<FetchResponse<PropertyConfiguration[]>>(
+			APIRoute.properties
+		),
+		APIClient.get<FetchResponse<TestCase[]>>(
+			APIRoute.projectTestCases(projectShortCode)
+		),
 	])
-
-	if (!propertiesResponse.ok) {
-		throw new Response('Failed to fetch data', { status: 500 })
-	}
-	if (!testCasesResponse.ok) {
-		throw new Response('Failed to fetch test cases', { status: 500 })
-	}
-
-	const properties = (await propertiesResponse.json()) as FetchResponse<
-		PropertyConfiguration[]
-	>
-	const testCases = (await testCasesResponse.json()) as FetchResponse<
-		TestCase[]
-	>
 
 	return { properties: properties.data, testCases: testCases.data }
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-	const projectShortCode = params.projectShortCode
-	if (!projectShortCode) {
-		throw new Response('Project short code is required', { status: 400 })
+	try {
+		const projectShortCode = params.projectShortCode
+		if (!projectShortCode) {
+			throw new Error('Project short code is required')
+		}
+
+		await APIClient.post<void>(APIRoute.projectTestRuns(projectShortCode), {
+			body: await request.json(),
+		})
+
+		return redirect(Route.viewProjectTestRuns(projectShortCode))
+	} catch (error) {
+		return Response.json(Tools.mapErrorToResponse(error), { status: 400 })
 	}
-
-	const response = await fetch(APIRoute.projectTestRuns(projectShortCode), {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: await request.text(),
-	})
-
-	if (!response.ok) {
-		throw new Response('Failed to create test run', { status: 500 })
-	}
-
-	return redirect(Route.viewProjectTestRuns(projectShortCode))
 }
 
 export default function NewTestRun() {
 	const navigate = useNavigate()
 	const { properties, testCases } = useLoaderData<typeof loader>()
-	const [isSubmitting, setIsSubmitting] = useState(false)
+	const { project } = useOutletContext<ProjectTestRunsOutletContext>()
+	const actionData = useActionData<ErrorResponse>()
+
 	const [showTestCaseSelector, setShowTestCaseSelector] = useState(false)
 	const [selectedTestCases, setSelectedTestCases] = useState<TestCase[]>([])
 	const submit = useSubmit()
@@ -88,7 +84,6 @@ export default function NewTestRun() {
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		setIsSubmitting(true)
 
 		const formData = new FormData(event.currentTarget)
 		const jsonData: CreateTestRun = {
@@ -104,8 +99,8 @@ export default function NewTestRun() {
 	}
 
 	return (
-		<div className="p-6">
-			<div className="mb-6">
+		<div className="space-y-6">
+			<div>
 				<h1 className="text-2xl font-semibold text-gray-900">
 					{showTestCaseSelector
 						? 'Select Test Cases'
@@ -113,9 +108,12 @@ export default function NewTestRun() {
 				</h1>
 			</div>
 
+			{actionData && <ErrorMessage message={actionData.message} />}
+
 			{showTestCaseSelector ? (
 				<div className="space-y-6">
 					<TestCaseSelector
+						project={project}
 						properties={properties}
 						testCases={testCases}
 						onDone={(testCases) => {
@@ -142,7 +140,7 @@ export default function NewTestRun() {
 									id="title"
 									required
 									defaultValue={defaultTitle}
-									className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+									className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
 								/>
 							</div>
 
@@ -157,21 +155,29 @@ export default function NewTestRun() {
 									name="description"
 									id="description"
 									rows={4}
-									className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+									className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
 								/>
 							</div>
 						</div>
 					</div>
 
-					<div>
+					<div className="space-y-3">
+						<label className="block text-sm font-medium text-gray-700">
+							Test Cases
+						</label>
+						<div className="flex items-center gap-3">
+							<div className="text-sm text-gray-500">
+								{selectedTestCases.length > 0
+									? `${selectedTestCases.length} test cases selected`
+									: 'No test cases selected'}
+							</div>
+						</div>
 						<button
 							type="button"
 							onClick={() => setShowTestCaseSelector(true)}
-							className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+							className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
 						>
-							{selectedTestCases.length > 0
-								? `Selected Test Cases (${selectedTestCases.length})`
-								: 'Select Test Cases'}
+							Change Selection
 						</button>
 					</div>
 
@@ -185,10 +191,9 @@ export default function NewTestRun() {
 						</button>
 						<button
 							type="submit"
-							disabled={isSubmitting}
 							className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400"
 						>
-							{isSubmitting ? 'Creating...' : 'Create Test Run'}
+							Create Test Run
 						</button>
 					</div>
 				</Form>

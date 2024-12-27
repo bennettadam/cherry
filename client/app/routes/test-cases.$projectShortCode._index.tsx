@@ -93,7 +93,10 @@ export default function TestCasesIndex() {
 			</div>
 
 			<Table
-				data={testCases}
+				tableRows={testCases.map((testCase) => ({
+					id: testCase.testCaseID,
+					data: testCase,
+				}))}
 				columns={columns}
 				onRowClick={(testCase) =>
 					navigate(testCase.testCaseNumber.toString())

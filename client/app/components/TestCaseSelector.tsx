@@ -1,11 +1,29 @@
 import { useState } from 'react'
-import type { PropertyConfiguration, TestCase } from '~/models/types'
+import {
+	PropertyType,
+	type PropertyConfiguration,
+	type TestCase,
+} from '~/models/types'
+
+import { SelectDropdown } from './SelectDropdown'
+import { Table, type Column } from './Table'
+import { Tools } from '~/utility/Tools'
+import { Project } from '~/models/project'
+import UnfilledCircle from './UnfilledCircle'
+import Checkmark from './Checkmark'
+
+// Example: you might define a union for your filter values.
+// "text" covers both text/number; "select" covers multi-select checkboxes.
+type FilterValue =
+	| { type: 'text'; value: string }
+	| { type: 'select'; values: string[] }
 
 interface TestCaseSelectorProps {
 	properties: PropertyConfiguration[]
 	testCases: TestCase[]
 	onDone: (selectedTestCases: TestCase[]) => void
 	initialSelectedTestCases?: TestCase[]
+	project: Project
 }
 
 export default function TestCaseSelector({
@@ -13,23 +31,53 @@ export default function TestCaseSelector({
 	testCases,
 	onDone,
 	initialSelectedTestCases = [],
+	project,
 }: TestCaseSelectorProps) {
 	const [searchQuery, setSearchQuery] = useState('')
+	const [showFilters, setShowFilters] = useState(false)
+
+	// Instead of storing a single string per property,
+	// store a FilterValue for maximum flexibility.
 	const [selectedFilters, setSelectedFilters] = useState<
-		Record<string, string>
+		Record<string, FilterValue>
 	>({})
+
+	// We still track which properties we have “added” as filters
 	const [selectedPropertyIDs, setSelectedPropertyIDs] = useState<string[]>([])
-	const [selectedTestCases, setSelectedTestCases] = useState<TestCase[]>(
-		initialSelectedTestCases
+
+	// Convert to Set of IDs
+	const [selectedTestCaseIDs, setSelectedTestCaseIDs] = useState<Set<string>>(
+		new Set(initialSelectedTestCases.map((tc) => tc.testCaseID))
 	)
 
+	// 1) Filter logic
 	const filteredTestCases = testCases.filter((testCase: TestCase) => {
-		const matchesFilters = Object.entries(selectedFilters).every(
-			([propertyID, value]) => {
-				return testCase.propertyValues[propertyID] === value
+		// For each property in selectedFilters, check if the test case matches
+		const matchesAllFilters = Object.entries(selectedFilters).every(
+			([propertyID, filterValue]) => {
+				const testCaseVal = testCase.propertyValues[propertyID] ?? ''
+
+				if (filterValue.type === 'text') {
+					// Only filter if there's a text value
+					return (
+						filterValue.value === '' ||
+						testCaseVal
+							.toString()
+							.toLowerCase()
+							.includes(filterValue.value.toLowerCase())
+					)
+				} else if (filterValue.type === 'select') {
+					// Only filter if there are selected values
+					return (
+						filterValue.values.length === 0 ||
+						filterValue.values.includes(testCaseVal)
+					)
+				}
+				return true
 			}
 		)
 
+		// Also match the overall search on title/description
 		const matchesSearch = searchQuery
 			? testCase.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
 			  (testCase.description?.toLowerCase() || '').includes(
@@ -37,43 +85,79 @@ export default function TestCaseSelector({
 			  )
 			: true
 
-		return matchesFilters && matchesSearch
+		return matchesAllFilters && matchesSearch
 	})
 
-	const handleFilterChange = (propertyID: string, value: string) => {
-		setSelectedFilters((prev) => ({
-			...prev,
-			[propertyID]: value,
-		}))
-	}
+	// 2) Handlers
 
+	// When user selects a property from the dropdown
 	const handleAddProperty = (propertyID: string) => {
 		setSelectedPropertyIDs((prev) => [...prev, propertyID])
+		// If it has selectOptions, assume type=select and empty array
+		// Otherwise assume type=text with empty string
+		const property = properties.find(
+			(p) => p.propertyConfigurationID === propertyID
+		)
+		let initialFilterValue: FilterValue
+
+		if (property?.selectOptions && property.selectOptions.length > 0) {
+			initialFilterValue = { type: 'select', values: [] }
+		} else {
+			initialFilterValue = { type: 'text', value: '' }
+		}
+
 		setSelectedFilters((prev) => ({
 			...prev,
-			[propertyID]: '',
+			[propertyID]: initialFilterValue,
 		}))
+		setShowFilters(false)
 	}
 
 	const handleRemoveProperty = (propertyID: string) => {
 		setSelectedPropertyIDs((prev) => prev.filter((id) => id !== propertyID))
 		setSelectedFilters((prev) => {
-			const { [propertyID]: removed, ...rest } = prev
+			const { [propertyID]: _removed, ...rest } = prev
 			return rest
 		})
 	}
 
-	const handleToggleTestCase = (testCase: TestCase) => {
-		setSelectedTestCases((prev) => {
-			const isSelected = prev.some(
-				(selected) => selected.testCaseID === testCase.testCaseID
-			)
-			if (isSelected) {
-				return prev.filter(
-					(selected) => selected.testCaseID !== testCase.testCaseID
-				)
+	// For text/number property updates
+	const handleTextChange = (propertyID: string, val: string) => {
+		setSelectedFilters((prev) => ({
+			...prev,
+			[propertyID]: { type: 'text', value: val },
+		}))
+	}
+
+	// For select property updates (checkbox lists)
+	// Toggles a value on/off
+	const handleSelectOptionToggle = (propertyID: string, option: string) => {
+		setSelectedFilters((prev) => {
+			const currentFilter = prev[propertyID] as {
+				type: 'select'
+				values: string[]
 			}
-			return [...prev, testCase]
+			const { values } = currentFilter
+			const newValues = values.includes(option)
+				? values.filter((v) => v !== option)
+				: [...values, option]
+
+			return {
+				...prev,
+				[propertyID]: { type: 'select', values: newValues },
+			}
+		})
+	}
+
+	const handleToggleTestCase = (testCase: TestCase) => {
+		setSelectedTestCaseIDs((prev) => {
+			const next = new Set(prev)
+			if (next.has(testCase.testCaseID)) {
+				next.delete(testCase.testCaseID)
+			} else {
+				next.add(testCase.testCaseID)
+			}
+			return next
 		})
 	}
 
@@ -81,56 +165,144 @@ export default function TestCaseSelector({
 		(prop) => !selectedPropertyIDs.includes(prop.propertyConfigurationID)
 	)
 
-	return (
-		<>
-			<div className="mb-6">
-				<h2 className="text-lg font-medium text-gray-900 mb-4">
-					Selected Test Cases: {selectedTestCases.length}
-				</h2>
-			</div>
+	const renderFilterInput = (
+		property: PropertyConfiguration,
+		propertyID: string,
+		filterValue: FilterValue
+	) => {
+		switch (property.propertyType) {
+			case PropertyType.singleSelectList:
+				return (
+					<div className="flex flex-col gap-1 mt-1">
+						{property.selectOptions?.map((option) => {
+							const selected =
+								filterValue.type === 'select' &&
+								filterValue.values.includes(option)
+							return (
+								<label
+									key={option}
+									className="inline-flex items-center"
+								>
+									<input
+										type="checkbox"
+										className="h-4 w-4"
+										checked={selected}
+										onChange={() =>
+											handleSelectOptionToggle(propertyID, option)
+										}
+									/>
+									<span className="ml-2 text-sm text-gray-700">
+										{option}
+									</span>
+								</label>
+							)
+						})}
+					</div>
+				)
 
-			<div className="mb-4">
-				<h2 className="text-lg font-medium text-gray-900 mb-2">
-					Available Test Cases
-				</h2>
-				<div className="flex gap-4">
+			case PropertyType.text:
+			case PropertyType.number:
+				return (
 					<input
 						type="text"
-						placeholder="Search test cases..."
-						value={searchQuery}
-						onChange={(e) => setSearchQuery(e.target.value)}
-						className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+						className="block w-full rounded-md bg-gray-50 px-3 py-2 text-gray-900 placeholder-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+						placeholder="Type filter..."
+						value={filterValue.type === 'text' ? filterValue.value : ''}
+						onChange={(e) => handleTextChange(propertyID, e.target.value)}
 					/>
-					<select
-						className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-						onChange={(e) => {
-							if (e.target.value) {
-								handleAddProperty(e.target.value)
-								e.target.value = ''
-							}
-						}}
-						value=""
-					>
-						<option value="">Add Property Filter...</option>
-						{availableProperties.map((property) => (
-							<option
-								key={property.propertyConfigurationID}
-								value={property.propertyConfigurationID}
-							>
-								{property.title}
-							</option>
-						))}
-					</select>
-				</div>
+				)
+			default:
+				return <p>Unsupported property type</p>
+		}
+	}
+
+	const getTableColumns = (): Column<TestCase>[] => {
+		return [
+			{
+				header: '',
+				key: 'selection',
+				render: (testCase) => {
+					const isSelected = selectedTestCaseIDs.has(testCase.testCaseID)
+					return isSelected ? (
+						<Checkmark className="h-5 w-5 fill-sky-600" />
+					) : (
+						<UnfilledCircle className="h-5 w-5 fill-gray-400" />
+					)
+				},
+			},
+			{
+				header: 'ID',
+				key: 'id',
+				render: (testCase) => Tools.testCaseDisplayCode(project, testCase),
+			},
+			{
+				header: 'Title',
+				key: 'title',
+				render: (testCase) => (
+					<div>
+						<div className="font-medium text-gray-900">
+							{testCase.title}
+						</div>
+						{testCase.description && (
+							<div className="text-sm text-gray-500">
+								{testCase.description}
+							</div>
+						)}
+					</div>
+				),
+			},
+		]
+	}
+
+	return (
+		<div className="space-y-6">
+			{/* Selected Test Cases count */}
+			<div>
+				<h2 className="text-lg font-medium text-gray-900 mb-4">
+					Selected Test Cases: {selectedTestCaseIDs.size}
+				</h2>
 			</div>
 
-			<div className="grid grid-cols-2 gap-4 mb-6">
+			{/* Basic text search (title/desc) + Filter button */}
+			<div className="flex items-center gap-4">
+				<input
+					type="text"
+					placeholder="Search test cases..."
+					value={searchQuery}
+					onChange={(e) => setSearchQuery(e.target.value)}
+					className="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+				/>
+
+				<SelectDropdown
+					value="Filter"
+					options={availableProperties.map((prop) => prop.title)}
+					onChange={(title) => {
+						const property = availableProperties.find(
+							(p) => p.title === title
+						)
+						if (property) {
+							handleAddProperty(property.propertyConfigurationID)
+						}
+					}}
+					placeholder={
+						availableProperties.length === 0 ? 'No more properties' : ''
+					}
+				/>
+			</div>
+
+			{/* Display existing filters */}
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
 				{selectedPropertyIDs.map((propertyID) => {
 					const property = properties.find(
 						(p) => p.propertyConfigurationID === propertyID
 					)!
+					const filterValue = selectedFilters[propertyID]
+
 					return (
-						<div key={propertyID} className="relative">
+						<div
+							key={propertyID}
+							className="border border-gray-200 p-4 rounded-lg relative"
+						>
 							<div className="flex items-center justify-between mb-2">
 								<label className="block text-sm font-medium text-gray-700">
 									{property.title}
@@ -154,69 +326,43 @@ export default function TestCaseSelector({
 									</svg>
 								</button>
 							</div>
-							<select
-								className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-								onChange={(e) =>
-									handleFilterChange(propertyID, e.target.value)
-								}
-								value={selectedFilters[propertyID] || ''}
-							>
-								<option value="">Any</option>
-								{property.selectOptions?.map((option) => (
-									<option key={option} value={option}>
-										{option}
-									</option>
-								))}
-							</select>
+							{renderFilterInput(property, propertyID, filterValue)}
 						</div>
 					)
 				})}
 			</div>
 
+			{/* Filtered test cases */}
 			<div className="mb-6">
 				<h2 className="text-lg font-medium text-gray-900 mb-4">
 					Available Test Cases ({filteredTestCases.length})
 				</h2>
-				<div className="border rounded-md divide-y">
-					{filteredTestCases.map((testCase) => {
-						const isSelected = selectedTestCases.some(
-							(selected) => selected.testCaseID === testCase.testCaseID
-						)
-						return (
-							<div
-								key={testCase.testCaseID}
-								onClick={() => handleToggleTestCase(testCase)}
-								className={`p-4 cursor-pointer hover:bg-gray-50 ${
-									isSelected ? 'bg-sky-50' : ''
-								}`}
-							>
-								<div>
-									<h3 className="font-medium">{testCase.title}</h3>
-									{testCase.description && (
-										<p className="text-sm text-gray-600">
-											{testCase.description}
-										</p>
-									)}
-								</div>
-							</div>
-						)
-					})}
-					{filteredTestCases.length === 0 && (
-						<div className="p-4 text-gray-500 text-sm">
-							No test cases available
-						</div>
-					)}
-				</div>
+				<Table
+					tableRows={filteredTestCases.map((testCase) => ({
+						id: testCase.testCaseID,
+						data: testCase,
+						isSelected: selectedTestCaseIDs.has(testCase.testCaseID),
+					}))}
+					columns={getTableColumns()}
+					onRowClick={handleToggleTestCase}
+				/>
 			</div>
 
+			{/* Done button */}
 			<div className="flex justify-end">
 				<button
-					onClick={() => onDone(selectedTestCases)}
+					onClick={() =>
+						onDone(
+							testCases.filter((tc) =>
+								selectedTestCaseIDs.has(tc.testCaseID)
+							)
+						)
+					}
 					className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
 				>
 					Done
 				</button>
 			</div>
-		</>
+		</div>
 	)
 }

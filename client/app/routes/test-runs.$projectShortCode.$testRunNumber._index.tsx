@@ -11,6 +11,7 @@ import type { TestCaseRun } from '~/models/types'
 import { Tools } from '~/utility/Tools'
 import { BackButton } from '~/components/BackButton'
 import { DateDisplay } from '../components/DateDisplay'
+import { APIClient } from '../utility/APIClient'
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const projectShortCode = params.projectShortCode
@@ -22,38 +23,19 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	if (requestJSON.intent === 'abort') {
 		const { testRunUpdate, testRunID } = requestJSON
-		const response = await fetch(APIRoute.testRun(testRunID), {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify(testRunUpdate),
+		await APIClient.put<void>(APIRoute.testRun(testRunID), {
+			body: testRunUpdate,
 		})
 
-		if (!response.ok) {
-			throw new Response('Failed to abort test run', { status: 500 })
-		}
-
 		return redirect(Route.viewProjectTestRuns(projectShortCode))
-	}
-
-	if (requestJSON.intent === 'delete') {
+	} else if (requestJSON.intent === 'delete') {
 		const { testRunID } = requestJSON
-		const response = await fetch(APIRoute.testRun(testRunID), {
-			method: 'DELETE',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		})
-
-		if (!response.ok) {
-			throw new Response('Failed to delete test run', { status: 500 })
-		}
+		await APIClient.delete<void>(APIRoute.testRun(testRunID))
 
 		return redirect(Route.viewProjectTestRuns(projectShortCode))
+	} else {
+		throw new Response('Invalid request', { status: 400 })
 	}
-
-	throw new Response('Invalid request', { status: 400 })
 }
 
 export default function TestRunDetails() {
@@ -214,7 +196,10 @@ export default function TestRunDetails() {
 
 			<h3 className="text-lg font-medium text-gray-900 mb-4">Test Cases</h3>
 			<Table
-				data={testCaseRuns}
+				tableRows={testCaseRuns.map((testCaseRun) => ({
+					id: testCaseRun.testCaseRunID,
+					data: testCaseRun,
+				}))}
 				columns={columns}
 				onRowClick={(testCaseRun) =>
 					navigate(testCaseRun.testCase.testCaseNumber.toString())

@@ -8,6 +8,8 @@ import type {
 } from '~/models/types'
 import ProjectSidebar from '../components/ProjectSidebar'
 import { Project } from '../models/project'
+import { APIClient } from '~/utility/APIClient'
+import { Tools } from '../utility/Tools'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	const projectShortCode = params.projectShortCode
@@ -15,44 +17,27 @@ export async function loader({ params }: LoaderFunctionArgs) {
 		throw new Response('Project ID is required', { status: 400 })
 	}
 
-	const [projectResponse, testRunsResponse] = await Promise.all([
-		fetch(APIRoute.projects, {
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		}),
-		fetch(APIRoute.projectTestRuns(projectShortCode), {
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		}),
-	])
+	try {
+		const [projectData, testRunsData] = await Promise.all([
+			APIClient.get<FetchResponse<Project[]>>(APIRoute.projects),
+			APIClient.get<FetchResponse<TestRun[]>>(
+				APIRoute.projectTestRuns(projectShortCode)
+			),
+		])
 
-	if (!projectResponse.ok) {
-		throw new Response('Failed to fetch project', { status: 500 })
+		const project = projectData.data.find(
+			(project) => project.projectShortCode === projectShortCode
+		)
+		if (!project) {
+			throw new Response('Project not found', { status: 404 })
+		}
+
+		return { project, testRuns: testRunsData.data }
+	} catch (error) {
+		throw new Response(JSON.stringify(Tools.mapErrorToResponse(error)), {
+			status: 500,
+		})
 	}
-
-	if (!testRunsResponse.ok) {
-		throw new Response('Failed to fetch test runs', { status: 500 })
-	}
-
-	const projectData = (await projectResponse.json()) as FetchResponse<
-		Project[]
-	>
-	const project = projectData.data.find(
-		(project) => project.projectShortCode === projectShortCode
-	)
-	if (!project) {
-		throw new Response('Project not found', { status: 404 })
-	}
-
-	const testRunsData = (await testRunsResponse.json()) as FetchResponse<
-		TestRun[]
-	>
-
-	return { project, testRuns: testRunsData.data }
 }
 
 export default function TestRunsIndex() {

@@ -12,8 +12,7 @@ import type {
 	ProjectTestRunsOutletContext,
 	TestCaseRun,
 } from '~/models/types'
-import ProjectSidebar from '../components/ProjectSidebar'
-import { Project } from '../models/project'
+import { APIClient } from '~/utility/APIClient'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	const projectShortCode = params.projectShortCode
@@ -25,22 +24,10 @@ export async function loader({ params }: LoaderFunctionArgs) {
 		throw new Response('Test run number is required', { status: 400 })
 	}
 
-	const response = await fetch(
-		APIRoute.projectTestCaseRuns(projectShortCode, testRunNumber),
-		{
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		}
+	const response = await APIClient.get<FetchResponse<TestCaseRun[]>>(
+		APIRoute.projectTestCaseRuns(projectShortCode, testRunNumber)
 	)
-
-	if (!response.ok) {
-		throw new Response('Failed to fetch test run', { status: 500 })
-	}
-
-	const testCaseRuns = (await response.json()) as FetchResponse<TestCaseRun[]>
-	return { testRunNumber, testCaseRuns: testCaseRuns.data }
+	return { testRunNumber, testCaseRuns: response.data }
 }
 
 export default function TestRunsIndex() {

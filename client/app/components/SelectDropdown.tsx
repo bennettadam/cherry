@@ -14,36 +14,38 @@ export function SelectDropdown({
 	placeholder,
 }: SelectDropdownProps) {
 	const [isOpen, setIsOpen] = useState(false)
-	const dropdownRef = useRef<HTMLDivElement>(null)
+	const buttonRef = useRef<HTMLButtonElement>(null)
+	const menuRef = useRef<HTMLDivElement>(null)
 
 	useEffect(() => {
 		function handleClickOutside(event: MouseEvent) {
-			if (
-				dropdownRef.current &&
-				!dropdownRef.current.contains(event.target as Node)
-			) {
+			const target = event.target as Node
+			const clickedButton = buttonRef.current?.contains(target)
+			const clickedMenu = menuRef.current?.contains(target)
+
+			if (!clickedButton && !clickedMenu) {
 				setIsOpen(false)
 			}
 		}
-		if (isOpen) {
-			document.addEventListener('mousedown', handleClickOutside)
-			return () =>
-				document.removeEventListener('mousedown', handleClickOutside)
-		}
-	}, [isOpen])
+		document.addEventListener('mousedown', handleClickOutside)
+		return () => document.removeEventListener('mousedown', handleClickOutside)
+	}, [])
 
 	return (
-		<div className="relative" ref={dropdownRef}>
+		<div className="relative">
 			<button
+				ref={buttonRef}
 				type="button"
 				onClick={() => options.length > 0 && setIsOpen(!isOpen)}
-				className={`mt-2 w-full text-left rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 ${
+				className={`text-left rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 ${
 					options.length > 0
 						? 'hover:bg-gray-100'
 						: 'cursor-not-allowed bg-gray-50'
 				} flex items-center justify-between shadow-sm`}
 			>
-				<span className={`${!value ? 'text-gray-500' : 'text-gray-900'}`}>
+				<span
+					className={`px-1 ${!value ? 'text-gray-500' : 'text-gray-900'}`}
+				>
 					{value || placeholder}
 				</span>
 				<svg
@@ -62,7 +64,10 @@ export function SelectDropdown({
 				</svg>
 			</button>
 			{isOpen && options.length > 0 && (
-				<div className="absolute z-10 mt-1 w-full rounded-md bg-white shadow-lg border border-gray-200 overflow-hidden">
+				<div
+					ref={menuRef}
+					className={`absolute z-10 mt-1 min-w-[200px] rounded-md bg-white shadow-lg border border-gray-200 overflow-hidden`}
+				>
 					<div className="max-h-60 overflow-auto">
 						{options.map((option) => (
 							<button
@@ -81,7 +86,9 @@ export function SelectDropdown({
 				</div>
 			)}
 			{isOpen && options.length === 0 && (
-				<div className="absolute z-10 mt-1 w-full rounded-md bg-white shadow-lg border border-gray-200 overflow-hidden">
+				<div
+					className={`absolute z-10 mt-1 min-w-[200px] rounded-md bg-white shadow-lg border border-gray-200 overflow-hidden`}
+				>
 					<div className="px-3 py-2 text-sm text-gray-500">
 						No options available
 					</div>

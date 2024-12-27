@@ -53,7 +53,10 @@ export default function ConfigurationProperties() {
 			</div>
 
 			<Table
-				data={properties}
+				tableRows={properties.map((property) => ({
+					id: property.propertyConfigurationID,
+					data: property,
+				}))}
 				columns={columns}
 				onRowClick={(property) =>
 					navigate(property.propertyConfigurationID.toString())
