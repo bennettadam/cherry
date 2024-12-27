@@ -1,35 +1,7 @@
-import { type LoaderFunctionArgs } from '@remix-run/node'
 import { Link, useNavigate, useOutletContext } from '@remix-run/react'
-import { APIRoute } from '~/utility/Routes'
-import {
-	FetchResponse,
-	ProjectTestCasesOutletContext,
-	TestCase,
-} from '~/models/types'
+import { ProjectTestCasesOutletContext, TestCase } from '~/models/types'
 import { Table, type Column } from '~/components/Table'
 import { DateDisplay } from '~/components/DateDisplay'
-
-export async function loader({ params }: LoaderFunctionArgs) {
-	const projectShortCode = params.projectShortCode
-	if (!projectShortCode) {
-		throw new Response('Project ID is required', { status: 400 })
-	}
-
-	const response = await fetch(APIRoute.projectTestCases(projectShortCode), {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-	})
-
-	if (!response.ok) {
-		throw new Response('Failed to fetch test cases', { status: 500 })
-	}
-
-	const testCases = (await response.json()) as FetchResponse<TestCase[]>
-
-	return { testCases: testCases.data }
-}
 
 export default function TestCasesIndex() {
 	const { project, testCases, properties } =

@@ -8,7 +8,7 @@ import {
 	TestCase,
 } from '~/models/types'
 import { Project } from '~/models/project'
-import { APIRoute, Route } from '~/utility/Routes'
+import { APIRoute } from '~/utility/Routes'
 
 export async function loader({ params }: LoaderFunctionArgs) {
 	const projectShortCode = params.projectShortCode

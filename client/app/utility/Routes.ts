@@ -23,6 +23,14 @@ export class Route {
 		return `/test-runs/${projectShortCode}/${testRunNumber}`
 	}
 
+	static viewTestCaseRun(
+		projectShortCode: string,
+		testRunNumber: number,
+		testCaseNumber: number
+	) {
+		return `/test-runs/${projectShortCode}/${testRunNumber}/${testCaseNumber}`
+	}
+
 	static get viewProperties() {
 		return '/configuration/properties'
 	}
@@ -59,6 +67,10 @@ export class APIRoute {
 
 	static testCaseRun(testCaseRunID: string) {
 		return `http://localhost:8080/api/v1/workspace/test-case-runs/${testCaseRunID}`
+	}
+
+	static nextTestCaseRun(testCaseRunID: string) {
+		return `http://localhost:8080/api/v1/workspace/test-case-runs/${testCaseRunID}/next`
 	}
 
 	static get properties() {

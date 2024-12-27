@@ -1,6 +1,5 @@
 package com.cherry.cherryservice.services
 
-import com.cherry.cherryservice.dto.*
 import com.cherry.cherryservice.dto.projects.CreateWorkspaceProjectDTO
 import com.cherry.cherryservice.dto.projects.WorkspaceProjectDTO
 import com.cherry.cherryservice.dto.properties.*
@@ -246,17 +245,6 @@ class WorkspaceService(
     }
 
     @Transactional
-    fun retrieveTestCaseRuns(projectShortCode: String, testRunNumber: Long): List<TestCaseRunDTO> {
-        val project = projectRepository.findByProjectShortCode(projectShortCode)
-        requireNotNull(project) { "No project found for id $projectShortCode" }
-
-        val testRun = testRunRepository.findByProjectAndTestRunNumber(project, testRunNumber)
-        requireNotNull(testRun) { "No test run found with test run number $testRunNumber" }
-        val testCaseRuns = testCaseRunRepository.findAllByTestRun(testRun)
-        return testCaseRuns.map { it.toDTO() }
-    }
-
-    @Transactional
     fun createTestRun(projectShortCode: String, testRun: CreateTestRunDTO) {
         val project = projectRepository.findByProjectShortCode(projectShortCode)
         requireNotNull(project) { "No project found for id $projectShortCode" }
@@ -311,6 +299,50 @@ class WorkspaceService(
         
         // Then delete the test run itself
         testRunRepository.delete(testRun)
+    }
+
+    @Transactional
+    fun retrieveTestCaseRuns(projectShortCode: String, testRunNumber: Long): List<TestCaseRunDTO> {
+        val project = projectRepository.findByProjectShortCode(projectShortCode)
+        requireNotNull(project) { "No project found for id $projectShortCode" }
+
+        val testRun = testRunRepository.findByProjectAndTestRunNumber(project, testRunNumber)
+        requireNotNull(testRun) { "No test run found with test run number $testRunNumber" }
+        val testCaseRuns = testCaseRunRepository.findAllByTestRunOrderByTestCaseTestCaseNumberAsc(testRun)
+        return testCaseRuns.map { it.toDTO() }
+    }
+
+    @Transactional
+    fun retrieveNextTestCaseRun(testCaseRunID: UUID): TestCaseRunDTO? {
+        val testCaseRun = testCaseRunRepository.findByExternalID(testCaseRunID)
+        requireNotNull(testCaseRun) { "No test case found for id $testCaseRunID" }
+
+        if (testCaseRun.testRun.status != TestRunStatus.IN_PROGRESS) {
+            log.info("Test run ${testCaseRun.testRun.id} is not eligible to auto-retrieve")
+            return null
+        }
+
+        val testCaseRuns = testCaseRunRepository.findAllByTestRunOrderByTestCaseTestCaseNumberAsc(testCaseRun.testRun)
+
+        val testCaseRunIndex = testCaseRuns.indexOfFirst { it.id == testCaseRun.id }
+        require(testCaseRunIndex >= 0) { "Test case run not found in test run ${testCaseRun.testRun.externalID}" }
+
+        // First, search from current index to end
+        for (i in (testCaseRunIndex + 1) until testCaseRuns.size) {
+            if (testCaseRuns[i].status == TestCaseRunStatus.PENDING) {
+                return testCaseRuns[i].toDTO()
+            }
+        }
+
+        // If nothing found, search from start up to current index
+        for (i in 0 until testCaseRunIndex) {
+            if (testCaseRuns[i].status == TestCaseRunStatus.PENDING) {
+                return testCaseRuns[i].toDTO()
+            }
+        }
+
+        // No pending test cases found
+        return null
     }
 
     @Transactional

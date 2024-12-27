@@ -116,6 +116,12 @@ class WorkspaceController(
         return ResponseEntity.ok(DataResponse(data = testCaseRuns))
     }
 
+    @GetMapping("/test-case-runs/{testCaseRunID}/next")
+    fun retrieveNextTestCaseRun(@PathVariable testCaseRunID: UUID): ResponseEntity<Any> {
+        val testCaseRun = workspaceService.retrieveNextTestCaseRun(testCaseRunID)
+        return ResponseEntity.ok(DataResponse(data = testCaseRun))
+    }
+
     @PutMapping("/test-case-runs/{testCaseRunID}")
     fun updateTestCaseRun(@PathVariable testCaseRunID: UUID, @RequestBody request: UpdateTestCaseRunDTO): ResponseEntity<Any> {
         workspaceService.updateTestCaseRun(testCaseRunID, request)

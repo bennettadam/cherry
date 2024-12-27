@@ -1,12 +1,6 @@
-import {
-	json,
-	type LoaderFunctionArgs,
-	type ActionFunctionArgs,
-	redirect,
-} from '@remix-run/node'
+import { type ActionFunctionArgs, redirect } from '@remix-run/node'
 import {
 	Form,
-	useLoaderData,
 	useNavigate,
 	useOutletContext,
 	useSubmit,
@@ -14,10 +8,8 @@ import {
 import { Route, APIRoute } from '~/utility/Routes'
 import type {
 	ProjectTestCaseRunsOutletContext,
-	TestRun,
 	UpdateTestRun,
 } from '~/models/types'
-import type { FetchResponse, UpdateRequestBody } from '~/models/types'
 import { useState } from 'react'
 import { APIClient } from '~/utility/APIClient'
 
@@ -40,8 +32,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function EditTestRun() {
-	const { project, testRun } =
-		useOutletContext<ProjectTestCaseRunsOutletContext>()
+	const { testRun } = useOutletContext<ProjectTestCaseRunsOutletContext>()
 
 	const navigate = useNavigate()
 	const submit = useSubmit()

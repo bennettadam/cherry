@@ -1,13 +1,11 @@
 import { Link, useOutletContext, useNavigate } from '@remix-run/react'
 import { ProjectTestRunsOutletContext, TestRun } from '~/models/types'
 import { TestRunStatusBadge } from '~/components/TestRunStatusBadge'
-import { Route } from '../utility/Routes'
 import { Table, Column } from '~/components/Table'
 import { DateDisplay } from '~/components/DateDisplay'
 
 export default function TestRunsIndex() {
-	const { project, testRuns } =
-		useOutletContext<ProjectTestRunsOutletContext>()
+	const { testRuns } = useOutletContext<ProjectTestRunsOutletContext>()
 	const navigate = useNavigate()
 
 	const columns: Column<TestRun>[] = [

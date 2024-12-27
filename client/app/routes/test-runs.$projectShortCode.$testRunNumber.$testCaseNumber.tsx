@@ -1,6 +1,8 @@
 import { type ActionFunctionArgs } from '@remix-run/node'
 import {
 	Link,
+	redirect,
+	redirectDocument,
 	useActionData,
 	useFetcher,
 	useOutletContext,
@@ -11,6 +13,8 @@ import {
 	ProjectTestCaseRunsOutletContext,
 	TestCaseRunStatus,
 	ErrorResponse,
+	FetchResponse,
+	TestCaseRun,
 } from '~/models/types'
 import { useState } from 'react'
 import { Tools } from '~/utility/Tools'
@@ -22,12 +26,34 @@ interface UpdateTestCaseRun extends Record<string, any> {
 	status: TestCaseRunStatus
 }
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request, params }: ActionFunctionArgs) {
 	try {
+		const projectShortCode = params.projectShortCode
+		const testRunNumber = Number(params.testRunNumber)
+		if (!projectShortCode || !testRunNumber) {
+			throw new Error('Invalid project short code or test run number')
+		}
+
 		const { testCaseRunID, testCaseRunUpdate } = await request.json()
 		await APIClient.put<void>(APIRoute.testCaseRun(testCaseRunID), {
 			body: testCaseRunUpdate,
 		})
+
+		const nextTestCaseRun = await APIClient.get<
+			FetchResponse<TestCaseRun | undefined>
+		>(APIRoute.nextTestCaseRun(testCaseRunID))
+		if (nextTestCaseRun.data) {
+			// redirect document to force a reload of the page
+			return redirectDocument(
+				Route.viewTestCaseRun(
+					projectShortCode,
+					testRunNumber,
+					nextTestCaseRun.data.testCase.testCaseNumber
+				)
+			)
+		} else {
+			return redirect(Route.viewTestRun(projectShortCode, testRunNumber))
+		}
 	} catch (error) {
 		return Response.json(Tools.mapErrorToResponse(error), {
 			status: 400,
@@ -78,10 +104,10 @@ export default function TestCaseRunDetails() {
 	}
 
 	return (
-		<div className="p-6">
+		<div className="space-y-6">
 			<BackButton />
 
-			<div className="mb-6">
+			<div>
 				<div className="flex items-center gap-4">
 					<h1 className="text-2xl font-semibold text-gray-900">
 						{testCaseRun.title}

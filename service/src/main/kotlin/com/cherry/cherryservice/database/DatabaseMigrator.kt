@@ -2,10 +2,15 @@ package com.cherry.cherryservice.database
 
 import com.cherry.cherryservice.dto.properties.PropertyConfigurationSource
 import com.cherry.cherryservice.dto.properties.PropertyConfigurationType
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.queryForObject
 
 class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) {
+
+    private val log: Log = LogFactory.getLog(javaClass)
+
     fun migrateDatabase() {
         val shouldDropDatabase = args.contains("--recreate-database")
         if (shouldDropDatabase) {
@@ -39,7 +44,7 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
         }
 
         while (schemaVersion != SchemaVersion.currentVersion) {
-            println("Migrating $schemaVersion")
+            log.info("Migrating $schemaVersion")
             when (schemaVersion) {
                 SchemaVersion.VERSION_ZERO -> {
                     // projects
@@ -167,7 +172,7 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
         }
 
         if (migrationNeeded) {
-            println("Migration to version ${SchemaVersion.currentVersion.value} complete")
+            log.info("Migration to version ${SchemaVersion.currentVersion.value} complete")
         }
     }
 }

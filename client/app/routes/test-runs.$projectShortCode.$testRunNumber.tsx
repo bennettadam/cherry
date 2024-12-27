@@ -1,11 +1,6 @@
 import { type LoaderFunctionArgs } from '@remix-run/node'
-import {
-	useLoaderData,
-	Outlet,
-	useOutletContext,
-	useParams,
-} from '@remix-run/react'
-import { Route, APIRoute } from '~/utility/Routes'
+import { useLoaderData, Outlet, useOutletContext } from '@remix-run/react'
+import { APIRoute } from '~/utility/Routes'
 import type {
 	FetchResponse,
 	ProjectTestCaseRunsOutletContext,

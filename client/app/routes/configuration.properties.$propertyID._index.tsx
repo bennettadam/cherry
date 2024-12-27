@@ -1,10 +1,4 @@
-import { type LoaderFunctionArgs } from '@remix-run/node'
-import {
-	useLoaderData,
-	Link,
-	useOutletContext,
-	useParams,
-} from '@remix-run/react'
+import { Link, useOutletContext } from '@remix-run/react'
 import { PropertyConfigurationDetailsOutletContext } from '~/models/types'
 import { Tools } from '~/utility/Tools'
 import { BackButton } from '~/components/BackButton'

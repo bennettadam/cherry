@@ -1,8 +1,5 @@
 import { Link, useOutletContext } from '@remix-run/react'
-import {
-	ProjectTestCasesOutletContext,
-	TestCaseOutletContext,
-} from '~/models/types'
+import { TestCaseOutletContext } from '~/models/types'
 import { BackButton } from '~/components/BackButton'
 import { DateDisplay } from '~/components/DateDisplay'
 

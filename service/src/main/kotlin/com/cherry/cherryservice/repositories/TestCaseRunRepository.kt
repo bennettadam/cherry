@@ -10,6 +10,8 @@ interface TestCaseRunRepository : JpaRepository<TestCaseRun, Long> {
 
     fun findAllByTestRun(testRun: TestRun): List<TestCaseRun>
 
+    fun findAllByTestRunOrderByTestCaseTestCaseNumberAsc(testRun: TestRun): List<TestCaseRun>
+
     fun deleteAllByTestRun(testRun: TestRun)
 
     fun deleteByExternalID(externalID: UUID)
