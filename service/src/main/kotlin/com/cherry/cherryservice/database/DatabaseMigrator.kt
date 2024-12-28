@@ -158,7 +158,15 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
                     jdbcTemplate.update("INSERT INTO schema_version (version) VALUES (?);", "0.0.1")
                 }
                 SchemaVersion.VERSION_0_0_1 -> {
-                    break;
+                    jdbcTemplate.execute("""
+                        ALTER TABLE test_case_runs
+                        ADD COLUMN notes TEXT;
+                    """.trimIndent())
+                    
+                    jdbcTemplate.update("INSERT INTO schema_version (version) VALUES (?);", "0.0.2")
+                }
+                SchemaVersion.VERSION_0_0_2 -> {
+                    break
                 }
             }
 

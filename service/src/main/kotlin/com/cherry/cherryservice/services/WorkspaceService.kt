@@ -271,7 +271,8 @@ class WorkspaceService(
                 status = TestCaseRunStatus.PENDING,
                 title = testCaseModel.title,
                 description = testCaseModel.description,
-                testInstructions = testCaseModel.testInstructions
+                testInstructions = testCaseModel.testInstructions,
+                notes = null
             )
             testCaseRunRepository.save(newTestCaseRun)
         }
@@ -351,6 +352,7 @@ class WorkspaceService(
         requireNotNull(testCaseRun) { "No test case found for id $testCaseRunID" }
 
         testCaseRun.status = updateDTO.status
+        testCaseRun.notes = updateDTO.notes
         testCaseRunRepository.save(testCaseRun)
 
         val testRun = testCaseRun.testRun

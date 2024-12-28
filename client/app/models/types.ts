@@ -94,6 +94,7 @@ export interface TestCaseRun {
 	title: string
 	description?: string
 	testInstructions?: string
+	notes?: string
 }
 
 export interface UpdateTestRun extends Record<string, any> {

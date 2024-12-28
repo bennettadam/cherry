@@ -24,6 +24,7 @@ import { ErrorMessage } from '../components/ErrorMessage'
 
 interface UpdateTestCaseRun extends Record<string, any> {
 	status: TestCaseRunStatus
+	notes?: string
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -43,7 +44,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			FetchResponse<TestCaseRun | undefined>
 		>(APIRoute.nextTestCaseRun(testCaseRunID))
 		if (nextTestCaseRun.data) {
-			// redirect document to force a reload of the page
 			return redirectDocument(
 				Route.viewTestCaseRun(
 					projectShortCode,
@@ -84,11 +84,13 @@ export default function TestCaseRunDetails() {
 		testCaseRun.status
 	)
 
-	const handleStatusUpdate = (status: TestCaseRunStatus) => {
-		setSelectedStatus(status)
+	const handleSave = () => {
+		const form = document.getElementById('testCaseForm') as HTMLFormElement
+		const notes = new FormData(form).get('notes') as string
 
 		const testCaseRunUpdate: UpdateTestCaseRun = {
-			status,
+			status: selectedStatus,
+			notes,
 		}
 
 		fetcher.submit(
@@ -130,13 +132,15 @@ export default function TestCaseRunDetails() {
 
 			<div className="space-y-8">
 				<section className="mt-6">
-					<h2 className="text-xl font-semibold text-gray-900 mb-4">
-						Status
-					</h2>
+					<div className="flex justify-between items-center mb-4">
+						<h2 className="text-xl font-semibold text-gray-900">
+							Status
+						</h2>
+					</div>
 					<div className="flex gap-3">
 						<button
 							type="button"
-							onClick={() => handleStatusUpdate(TestCaseRunStatus.pass)}
+							onClick={() => setSelectedStatus(TestCaseRunStatus.pass)}
 							className={`px-4 py-2 text-sm font-medium rounded-md ${
 								selectedStatus === TestCaseRunStatus.pass
 									? 'bg-green-100 text-green-800 ring-1 ring-green-600'
@@ -147,7 +151,7 @@ export default function TestCaseRunDetails() {
 						</button>
 						<button
 							type="button"
-							onClick={() => handleStatusUpdate(TestCaseRunStatus.fail)}
+							onClick={() => setSelectedStatus(TestCaseRunStatus.fail)}
 							className={`px-4 py-2 text-sm font-medium rounded-md ${
 								selectedStatus === TestCaseRunStatus.fail
 									? 'bg-red-100 text-red-800 ring-1 ring-red-600'
@@ -158,7 +162,7 @@ export default function TestCaseRunDetails() {
 						</button>
 						<button
 							type="button"
-							onClick={() => handleStatusUpdate(TestCaseRunStatus.skip)}
+							onClick={() => setSelectedStatus(TestCaseRunStatus.skip)}
 							className={`px-4 py-2 text-sm font-medium rounded-md ${
 								selectedStatus === TestCaseRunStatus.skip
 									? 'bg-yellow-100 text-yellow-800 ring-1 ring-yellow-600'
@@ -214,6 +218,30 @@ export default function TestCaseRunDetails() {
 							'No test instructions available'}
 					</div>
 				</section>
+
+				<form id="testCaseForm">
+					<section>
+						<h2 className="text-xl font-semibold text-gray-900 mb-4">
+							Notes
+						</h2>
+						<textarea
+							name="notes"
+							defaultValue={testCaseRun.notes}
+							className="w-full min-h-[100px] p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+							placeholder="Enter any notes or observations about this test case run"
+						/>
+					</section>
+				</form>
+
+				<div className="flex justify-end">
+					<button
+						type="button"
+						onClick={handleSave}
+						className="px-4 py-2 text-sm font-medium text-white bg-sky-600 rounded-md hover:bg-sky-700"
+					>
+						Save Changes
+					</button>
+				</div>
 			</div>
 		</div>
 	)

@@ -12,5 +12,6 @@ data class TestCaseRunDTO(
     val status: TestCaseRunStatus,
     val title: String,
     val description: String?,
-    val testInstructions: String?
+    val testInstructions: String?,
+    val notes: String?
 )

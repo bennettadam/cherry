@@ -44,8 +44,11 @@ class TestCaseRun(
 
     @Column(name = "test_instructions")
     var testInstructions: String?,
+
+    @Column(name = "notes")
+    var notes: String?,
 ) {
     fun toDTO(): TestCaseRunDTO {
-        return TestCaseRunDTO(externalID, creationDate, testCase.toDTO(), status, title, description, testInstructions)
+        return TestCaseRunDTO(externalID, creationDate, testCase.toDTO(), status, title, description, testInstructions, notes)
     }
 }
