@@ -61,6 +61,10 @@ export class APIRoute {
 		return `http://localhost:8080/api/v1/workspace/test-runs/${testRunID}`
 	}
 
+	static exportTestRun(projectShortCode: string, testRunNumber: number) {
+		return `http://localhost:8080/api/v1/workspace/test-runs/${projectShortCode}/${testRunNumber}/export`
+	}
+
 	static projectTestCaseRuns(projectShortCode: string, testRunNumber: number) {
 		return `http://localhost:8080/api/v1/workspace/test-case-runs/${projectShortCode}/${testRunNumber}`
 	}

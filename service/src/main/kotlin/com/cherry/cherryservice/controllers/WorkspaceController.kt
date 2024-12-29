@@ -1,6 +1,7 @@
 package com.cherry.cherryservice.controllers
 
 import com.cherry.cherryservice.dto.*
+import com.cherry.cherryservice.dto.documents.TestRunExportType
 import com.cherry.cherryservice.dto.projects.CreateWorkspaceProjectDTO
 import com.cherry.cherryservice.dto.properties.CreatePropertyConfigurationDTO
 import com.cherry.cherryservice.dto.properties.UpdatePropertyConfigurationDTO
@@ -9,6 +10,8 @@ import com.cherry.cherryservice.dto.testruns.CreateTestRunDTO
 import com.cherry.cherryservice.dto.testruns.UpdateTestCaseRunDTO
 import com.cherry.cherryservice.dto.testruns.UpdateTestRunDTO
 import com.cherry.cherryservice.services.WorkspaceService
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
@@ -114,6 +118,16 @@ class WorkspaceController(
     fun retrieveTestCaseRuns(@PathVariable projectShortCode: String, @PathVariable testRunNumber: Long): ResponseEntity<Any> {
         val testCaseRuns = workspaceService.retrieveTestCaseRuns(projectShortCode, testRunNumber)
         return ResponseEntity.ok(DataResponse(data = testCaseRuns))
+    }
+
+    @PostMapping("/test-runs/{projectShortCode}/{testRunNumber}/export", produces = [MediaType.APPLICATION_OCTET_STREAM_VALUE])
+    fun generateDocx(@PathVariable projectShortCode: String, @PathVariable testRunNumber: Long, @RequestParam("type") exportType: TestRunExportType): ResponseEntity<ByteArray> {
+        val documentDTO = workspaceService.exportTestRunAsDocx(projectShortCode, testRunNumber, exportType)
+
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, """attachment; filename="${documentDTO.fileName}"""")
+            .contentType(MediaType("application", "vnd.openxmlformats-officedocument.wordprocessingml.document"))
+            .body(documentDTO.data)
     }
 
     @GetMapping("/test-case-runs/{testCaseRunID}/next")

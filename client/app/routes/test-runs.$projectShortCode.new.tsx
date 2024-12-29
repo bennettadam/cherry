@@ -75,11 +75,13 @@ export default function NewTestRun() {
 	const [selectedTestCases, setSelectedTestCases] = useState<TestCase[]>([])
 	const submit = useSubmit()
 
-	const todayDateString = new Date().toLocaleDateString('en-US', {
-		year: 'numeric',
-		month: 'numeric',
-		day: 'numeric',
-	})
+	const todayDateString = new Date()
+		.toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit',
+		})
+		.replace(/\//g, '-')
 	const defaultTitle = `${todayDateString} Test Run`
 
 	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {

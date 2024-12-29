@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
+import { Link } from '@remix-run/react'
 
 export interface ActionMenuItem {
 	label: string
-	action: () => void
+	action?: () => void
+	href?: string
 	variant?: 'default' | 'danger'
+	reloadDocument?: boolean
 }
 
 interface ActionMenuProps {
@@ -60,20 +63,36 @@ export function ActionMenu({ items, label = 'Actions' }: ActionMenuProps) {
 			{isOpen && (
 				<div className="absolute right-0 z-10 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5">
 					<div className="py-1" role="menu">
-						{items.map((item) => (
-							<button
-								key={item.label}
-								onClick={() => handleMenuItemClick(item.action)}
-								className={`block w-full px-4 py-2 text-left text-sm ${
-									item.variant === 'danger'
-										? 'text-red-600'
-										: 'text-gray-700'
-								} hover:bg-gray-100`}
-								role="menuitem"
-							>
-								{item.label}
-							</button>
-						))}
+						{items.map((item) =>
+							item.href ? (
+								<Link
+									key={item.label}
+									to={item.href}
+									reloadDocument={item.reloadDocument}
+									className={`block w-full px-4 py-2 text-left text-sm ${
+										item.variant === 'danger'
+											? 'text-red-600'
+											: 'text-gray-700'
+									} hover:bg-gray-100`}
+									role="menuitem"
+								>
+									{item.label}
+								</Link>
+							) : (
+								<button
+									key={item.label}
+									onClick={() => handleMenuItemClick(item.action!)}
+									className={`block w-full px-4 py-2 text-left text-sm ${
+										item.variant === 'danger'
+											? 'text-red-600'
+											: 'text-gray-700'
+									} hover:bg-gray-100`}
+									role="menuitem"
+								>
+									{item.label}
+								</button>
+							)
+						)}
 					</div>
 				</div>
 			)}

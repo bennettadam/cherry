@@ -1,5 +1,11 @@
 import { type ActionFunctionArgs, redirect } from '@remix-run/node'
-import { useNavigate, useSubmit, useOutletContext } from '@remix-run/react'
+import {
+	useNavigate,
+	useSubmit,
+	useOutletContext,
+	useFetcher,
+	Link,
+} from '@remix-run/react'
 import { Route, APIRoute } from '~/utility/Routes'
 import { ProjectTestCaseRunsOutletContext, TestRunStatus } from '~/models/types'
 import type { UpdateTestRun } from '~/models/types'
@@ -12,6 +18,8 @@ import { Tools } from '~/utility/Tools'
 import { BackButton } from '~/components/BackButton'
 import { DateDisplay } from '../components/DateDisplay'
 import { APIClient } from '../utility/APIClient'
+import { useState } from 'react'
+import { ExportModal } from '~/components/ExportModal'
 
 export async function action({ request, params }: ActionFunctionArgs) {
 	const projectShortCode = params.projectShortCode
@@ -21,7 +29,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	const requestJSON = await request.json()
 
-	if (requestJSON.intent === 'abort') {
+	if (requestJSON.intent === 'update') {
 		const { testRunUpdate, testRunID } = requestJSON
 		await APIClient.put<void>(APIRoute.testRun(testRunID), {
 			body: testRunUpdate,
@@ -39,6 +47,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function TestRunDetails() {
+	const [showExportModal, setShowExportModal] = useState(false)
 	const { project, testRun, testCaseRuns } =
 		useOutletContext<ProjectTestCaseRunsOutletContext>()
 
@@ -73,6 +82,11 @@ export default function TestRunDetails() {
 			},
 		}
 
+		const exportItem: ActionMenuItem = {
+			label: 'Export options',
+			action: () => setShowExportModal(true),
+		}
+
 		switch (testRun.status) {
 			case TestRunStatus.pending:
 			case TestRunStatus.inProgress:
@@ -88,7 +102,7 @@ export default function TestRunDetails() {
 
 							submit(
 								{
-									intent: 'abort',
+									intent: 'update',
 									testRunUpdate,
 									testRunID: testRun.testRunID,
 								},
@@ -100,6 +114,7 @@ export default function TestRunDetails() {
 						},
 					},
 					editItem,
+					exportItem,
 					deleteItem,
 				]
 			case TestRunStatus.abort:
@@ -115,7 +130,7 @@ export default function TestRunDetails() {
 
 							submit(
 								{
-									intent: 'abort',
+									intent: 'update',
 									testRunUpdate,
 									testRunID: testRun.testRunID,
 								},
@@ -127,12 +142,13 @@ export default function TestRunDetails() {
 						},
 					},
 					editItem,
+					exportItem,
 					deleteItem,
 				]
 			case TestRunStatus.complete:
-				return [editItem, deleteItem]
+				return [editItem, exportItem, deleteItem]
 			default:
-				return [editItem, deleteItem]
+				return [editItem, exportItem, deleteItem]
 		}
 	})()
 
@@ -204,6 +220,10 @@ export default function TestRunDetails() {
 				onRowClick={(testCaseRun) =>
 					navigate(testCaseRun.testCase.testCaseNumber.toString())
 				}
+			/>
+			<ExportModal
+				isOpen={showExportModal}
+				onClose={() => setShowExportModal(false)}
 			/>
 		</div>
 	)

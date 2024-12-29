@@ -1,5 +1,6 @@
 package com.cherry.cherryservice.services
 
+import com.cherry.cherryservice.dto.documents.*
 import com.cherry.cherryservice.dto.projects.CreateWorkspaceProjectDTO
 import com.cherry.cherryservice.dto.projects.WorkspaceProjectDTO
 import com.cherry.cherryservice.dto.properties.*
@@ -12,7 +13,13 @@ import com.cherry.cherryservice.utility.Tools
 import jakarta.transaction.Transactional
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.apache.poi.wp.usermodel.HeaderFooterType
+import org.apache.poi.xwpf.usermodel.ParagraphAlignment
+import org.apache.poi.xwpf.usermodel.UnderlinePatterns
+import org.apache.poi.xwpf.usermodel.XWPFDocument
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STFldCharType
 import org.springframework.stereotype.Service
+import java.io.ByteArrayOutputStream
 import java.util.*
 
 @Service
@@ -304,11 +311,7 @@ class WorkspaceService(
 
     @Transactional
     fun retrieveTestCaseRuns(projectShortCode: String, testRunNumber: Long): List<TestCaseRunDTO> {
-        val project = projectRepository.findByProjectShortCode(projectShortCode)
-        requireNotNull(project) { "No project found for id $projectShortCode" }
-
-        val testRun = testRunRepository.findByProjectAndTestRunNumber(project, testRunNumber)
-        requireNotNull(testRun) { "No test run found with test run number $testRunNumber" }
+        val testRun = testRun(projectShortCode, testRunNumber)
         val testCaseRuns = testCaseRunRepository.findAllByTestRunOrderByTestCaseTestCaseNumberAsc(testRun)
         return testCaseRuns.map { it.toDTO() }
     }
@@ -372,5 +375,178 @@ class WorkspaceService(
     @Transactional
     fun deleteTestCaseRun(testCaseRunID: UUID) {
         testCaseRunRepository.deleteByExternalID(testCaseRunID)
+    }
+
+    @Transactional
+    fun exportTestRunAsDocx(projectShortCode: String, testRunNumber: Long, exportType: TestRunExportType): DocumentDTO<ByteArray> {
+        val testRun = testRun(projectShortCode, testRunNumber)
+        val testCaseRuns = testCaseRunRepository.findAllByTestRunOrderByTestCaseTestCaseNumberAsc(testRun)
+
+        val sections = testCaseRuns.map { testCaseRun ->
+            val subsections = mutableListOf<Subsection>()
+
+            when (exportType) {
+                TestRunExportType.PLAN -> {
+                    subsections.add(
+                        Subsection(
+                            title = "Description",
+                            body = testCaseRun.description ?: "No description provided"
+                        )
+                    )
+                }
+                TestRunExportType.RESULTS -> {
+                    subsections.add(
+                        Subsection(
+                            title = "Status",
+                            body = testCaseRun.status.toString()
+                        )
+                    )
+
+                    val notes = testCaseRun.notes
+                    if (!notes.isNullOrBlank()) {
+                        subsections.add(
+                            Subsection(
+                                title = "Notes",
+                                body = notes
+                            )
+                        )
+                    }
+                }
+            }
+
+            Section(
+                title = "${testCaseRun.testCase.project.projectShortCode}-${testCaseRun.testCase.testCaseNumber} - ${testCaseRun.title}",
+                subsections = subsections
+            )
+        }
+
+        val documentTitle = when (exportType) {
+            TestRunExportType.PLAN -> "Test Plan: ${testRun.title}"
+            TestRunExportType.RESULTS -> "Test Results: ${testRun.title}"
+        }
+
+        val generateDocumentDTO = GenerateDocumentDTO(
+            title = documentTitle,
+            description = testRun.description ?: "No description provided",
+            sections = sections
+        )
+
+        val documentData = createDocx(generateDocumentDTO)
+        return DocumentDTO("${testRun.title}.docx", documentData)
+    }
+
+    private fun testRun(
+        projectShortCode: String,
+        testRunNumber: Long
+    ): TestRun {
+        val project = projectRepository.findByProjectShortCode(projectShortCode)
+        requireNotNull(project) { "No project found for id $projectShortCode" }
+
+        val testRun = testRunRepository.findByProjectAndTestRunNumber(project, testRunNumber)
+        requireNotNull(testRun) { "No test run found with test run number $testRunNumber" }
+        return testRun
+    }
+
+    private fun createDocx(documentModel: GenerateDocumentDTO): ByteArray {
+        val documentFontFamily = "Arial"
+
+        val doc = XWPFDocument()
+
+        // Add page numbers to footer
+        val footer = doc.createFooter(HeaderFooterType.DEFAULT)
+        val footerParagraph = footer.createParagraph().apply {
+            alignment = ParagraphAlignment.CENTER
+        }
+        footerParagraph.createRun().apply {
+            fontSize = 10
+            fontFamily = documentFontFamily
+            setText("Page ")
+        }
+
+        // Create a run for the PAGE field
+        val pageRun = footerParagraph.createRun().apply {
+            fontSize = 10
+            fontFamily = documentFontFamily
+        }
+        pageRun.ctr.addNewFldChar().fldCharType = STFldCharType.BEGIN
+        pageRun.ctr.addNewInstrText().stringValue = " PAGE "
+        pageRun.ctr.addNewFldChar().fldCharType = STFldCharType.END
+
+        footerParagraph.createRun().apply {
+            fontSize = 10
+            fontFamily = documentFontFamily
+            setText("/")
+        }
+
+        // Create a run for the NUMPAGES field
+        val numPagesRun = footerParagraph.createRun().apply {
+            fontSize = 10
+            fontFamily = documentFontFamily
+        }
+        numPagesRun.ctr.addNewFldChar().fldCharType = STFldCharType.BEGIN
+        numPagesRun.ctr.addNewInstrText().stringValue = " NUMPAGES "
+        numPagesRun.ctr.addNewFldChar().fldCharType = STFldCharType.END
+
+        // Title
+        val titleParagraph = doc.createParagraph().apply {
+            alignment = ParagraphAlignment.CENTER
+        }
+        titleParagraph.createRun().apply {
+            isBold = true
+            fontSize = 20
+            fontFamily = documentFontFamily
+            setText(documentModel.title)
+        }
+
+        // Description
+        val descriptionParagraph = doc.createParagraph()
+        descriptionParagraph.createRun().apply {
+            fontSize = 12
+            fontFamily = documentFontFamily
+            setText(documentModel.description)
+        }
+
+        // Sections
+        for (section: Section in documentModel.sections) {
+            val sectionParagraph = doc.createParagraph().apply {
+                spacingBefore = 200
+            }
+            sectionParagraph.createRun().apply {
+                isBold = true
+                fontSize = 16
+                fontFamily = documentFontFamily
+                setText(section.title)
+            }
+
+            // Subsections
+            for ((index, subsection) in section.subsections.withIndex()) {
+                // Add extra spacing before subsections (except the first one)
+                if (index > 0) {
+                    doc.createParagraph()
+                }
+
+                val subsectionTitleParagraph = doc.createParagraph()
+                subsectionTitleParagraph.createRun().apply {
+                    isItalic = true
+                    underline = UnderlinePatterns.SINGLE
+                    fontSize = 14
+                    fontFamily = documentFontFamily
+                    setText(subsection.title)
+                }
+
+                val subsectionBodyParagraph = doc.createParagraph()
+                subsectionBodyParagraph.createRun().apply {
+                    fontSize = 12
+                    fontFamily = documentFontFamily
+                    setText(subsection.body)
+                }
+            }
+        }
+
+        val outputStream = ByteArrayOutputStream()
+        doc.write(outputStream)
+        doc.close()
+
+        return outputStream.toByteArray()
     }
 }
