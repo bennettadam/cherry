@@ -41,47 +41,51 @@ export class Route {
 }
 
 export class APIRoute {
+	private static get baseAPIURL() {
+		return process.env.VITE_API_URL
+	}
+
 	static get projects() {
-		return 'http://localhost:8080/api/v1/workspace/projects'
+		return `${this.baseAPIURL}/api/v1/workspace/projects`
 	}
 
 	static projectTestCases(projectShortCode: string) {
-		return `http://localhost:8080/api/v1/workspace/test-cases/${projectShortCode}`
+		return `${this.baseAPIURL}/api/v1/workspace/test-cases/${projectShortCode}`
 	}
 
 	static testCase(testCaseID: string) {
-		return `http://localhost:8080/api/v1/workspace/test-cases/${testCaseID}`
+		return `${this.baseAPIURL}/api/v1/workspace/test-cases/${testCaseID}`
 	}
 
 	static projectTestRuns(projectShortCode: string) {
-		return `http://localhost:8080/api/v1/workspace/test-runs/${projectShortCode}`
+		return `${this.baseAPIURL}/api/v1/workspace/test-runs/${projectShortCode}`
 	}
 
 	static testRun(testRunID: string) {
-		return `http://localhost:8080/api/v1/workspace/test-runs/${testRunID}`
+		return `${this.baseAPIURL}/api/v1/workspace/test-runs/${testRunID}`
 	}
 
 	static exportTestRun(projectShortCode: string, testRunNumber: number) {
-		return `http://localhost:8080/api/v1/workspace/test-runs/${projectShortCode}/${testRunNumber}/export`
+		return `${this.baseAPIURL}/api/v1/workspace/test-runs/${projectShortCode}/${testRunNumber}/export`
 	}
 
 	static projectTestCaseRuns(projectShortCode: string, testRunNumber: number) {
-		return `http://localhost:8080/api/v1/workspace/test-case-runs/${projectShortCode}/${testRunNumber}`
+		return `${this.baseAPIURL}/api/v1/workspace/test-case-runs/${projectShortCode}/${testRunNumber}`
 	}
 
 	static testCaseRun(testCaseRunID: string) {
-		return `http://localhost:8080/api/v1/workspace/test-case-runs/${testCaseRunID}`
+		return `${this.baseAPIURL}/api/v1/workspace/test-case-runs/${testCaseRunID}`
 	}
 
 	static nextTestCaseRun(testCaseRunID: string) {
-		return `http://localhost:8080/api/v1/workspace/test-case-runs/${testCaseRunID}/next`
+		return `${this.baseAPIURL}/api/v1/workspace/test-case-runs/${testCaseRunID}/next`
 	}
 
 	static get properties() {
-		return 'http://localhost:8080/api/v1/workspace/properties'
+		return `${this.baseAPIURL}/api/v1/workspace/properties`
 	}
 
 	static property(propertyID: string) {
-		return `http://localhost:8080/api/v1/workspace/properties/${propertyID}`
+		return `${this.baseAPIURL}/api/v1/workspace/properties/${propertyID}`
 	}
 }
