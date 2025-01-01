@@ -2,18 +2,35 @@ package com.cherry.cherryservice.database
 
 import com.cherry.cherryservice.dto.properties.PropertyConfigurationSource
 import com.cherry.cherryservice.dto.properties.PropertyConfigurationType
+import com.cherry.cherryservice.utility.ApplicationEnvironment
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.CommandLineRunner
+import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.queryForObject
+import org.springframework.stereotype.Component
 
-class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) {
+@Component
+class DatabaseMigrator(
+    @Value("\${cherry.database.migration-mode}")
+    private val databaseMigrationMode: DatabaseMigrationMode,
+
+    @Value("\${cherry.application.environment}")
+    private val applicationEnvironment: ApplicationEnvironment,
+
+    private val jdbcTemplate: JdbcTemplate,
+
+    private val applicationContext: ConfigurableApplicationContext
+): CommandLineRunner {
 
     private val log: Log = LogFactory.getLog(javaClass)
 
-    fun migrateDatabase() {
-        val shouldDropDatabase = args.contains("--recreate-database")
+    override fun run(vararg args: String?) {
+        val shouldDropDatabase = databaseMigrationMode == DatabaseMigrationMode.REBUILD && applicationEnvironment == ApplicationEnvironment.DEVELOPMENT
         if (shouldDropDatabase) {
+            log.info("Rebuilding database")
             jdbcTemplate.execute("DROP OWNED BY current_user;")
         }
 
@@ -37,10 +54,15 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
             }
         }
 
-        val migrationEnabled = args.contains("--perform-migration")
-        val migrationNeeded = schemaVersion != SchemaVersion.currentVersion
-        if (migrationNeeded && !migrationEnabled) {
-            throw IllegalStateException("Application database is currently on schema version ${schemaVersion.value}. Start the application with the --perform-migration flag to perform the database migration, or downgrade the application.")
+        val isMigrationEnabled = setOf(DatabaseMigrationMode.MIGRATE, DatabaseMigrationMode.REBUILD).contains(databaseMigrationMode)
+        val isSchemaOutdated = schemaVersion != SchemaVersion.currentVersion
+        if (isSchemaOutdated && !isMigrationEnabled) {
+            throw IllegalStateException("Application database is currently on schema version ${schemaVersion.value}. Set the environment variable ${DatabaseMigrationMode.ENVIRONMENT_KEY}=${DatabaseMigrationMode.MIGRATE} to perform the database migration, or downgrade the application.")
+        }
+        else if (!isMigrationEnabled) {
+            // schema is up to date and migration isn't enabled, business as usual
+            log.info("Starting application with schema version ${schemaVersion.value}")
+            return
         }
 
         while (schemaVersion != SchemaVersion.currentVersion) {
@@ -162,7 +184,7 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
                         ALTER TABLE test_case_runs
                         ADD COLUMN notes TEXT;
                     """.trimIndent())
-                    
+
                     jdbcTemplate.update("INSERT INTO schema_version (version) VALUES (?);", "0.0.2")
                 }
                 SchemaVersion.VERSION_0_0_2 -> {
@@ -179,8 +201,17 @@ class DatabaseMigrator(val jdbcTemplate: JdbcTemplate, val args: Array<String>) 
             schemaVersion = SchemaVersion.fromValue(versionString)
         }
 
-        if (migrationNeeded) {
+        if (isSchemaOutdated) {
             log.info("Migration to version ${SchemaVersion.currentVersion.value} complete")
         }
+        else {
+            log.info("Schema version is already ${SchemaVersion.currentVersion.value}, migration not needed")
+        }
+
+        // in order to prevent running the application with migration mode enabled indefinitely, we'll force the application to shut down here
+        // this makes migrations explicitly opt-in, to help prevent the scenario of pulling a new version from source
+        // and unexpectedly migrating the whole application (speaking from experience)
+        log.info("*** Application in migration mode, shutting down. Restart the application with the environment variable ${DatabaseMigrationMode.ENVIRONMENT_KEY}=${DatabaseMigrationMode.NONE} to start the service ***")
+        applicationContext.close()
     }
 }
