@@ -1,6 +1,6 @@
 # Cherry Test Management Platform
 
-![Cherry Logo](./documentation/assets/cherry.png)
+<img src="./documentation/assets/cherry.png" alt="Cherry Logo" width=300>
 
 Cherry is a modern test case management platform that helps teams organize, track, and execute their testing efforts efficiently. Built on top of enterprise-grade open source tools, Cherry provides a robust and reliable solution for managing and executing test cases.
 
