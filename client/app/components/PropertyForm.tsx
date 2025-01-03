@@ -1,10 +1,10 @@
 import { Form, Link } from '@remix-run/react'
 import { useState } from 'react'
 import { PropertyConfiguration, PropertyType } from '~/models/types'
-import { Route } from '~/utility/Routes'
 import { SelectDropdown } from './SelectDropdown'
 import { Tools } from '../utility/Tools'
 import { ErrorMessage } from './ErrorMessage'
+import { v4 as uuid } from 'uuid'
 
 export interface PropertyFormData extends Record<string, any> {
 	title: string
@@ -41,13 +41,13 @@ const createInitialSelectState = (
 ): { options: SelectOption[]; defaultId?: string } => {
 	if (!selectOptions?.length) {
 		return {
-			options: [{ id: crypto.randomUUID(), value: '' }],
+			options: [{ id: uuid(), value: '' }],
 			defaultId: undefined,
 		}
 	}
 
 	const options = selectOptions.map((value) => ({
-		id: crypto.randomUUID(),
+		id: uuid(),
 		value,
 	}))
 
@@ -94,10 +94,7 @@ export default function PropertyForm({
 	)
 
 	const addOption = () => {
-		setSelectOptions([
-			...selectOptions,
-			{ id: crypto.randomUUID(), value: '' },
-		])
+		setSelectOptions([...selectOptions, { id: uuid(), value: '' }])
 	}
 
 	const updateOption = (id: string, value: string) => {

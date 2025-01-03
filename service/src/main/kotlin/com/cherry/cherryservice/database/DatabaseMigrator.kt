@@ -28,10 +28,14 @@ class DatabaseMigrator(
     private val log: Log = LogFactory.getLog(javaClass)
 
     override fun run(vararg args: String?) {
-        val shouldDropDatabase = databaseMigrationMode == DatabaseMigrationMode.REBUILD && applicationEnvironment == ApplicationEnvironment.DEVELOPMENT
-        if (shouldDropDatabase) {
-            log.info("Rebuilding database")
-            jdbcTemplate.execute("DROP OWNED BY current_user;")
+        if (databaseMigrationMode == DatabaseMigrationMode.REBUILD) {
+            if (applicationEnvironment == ApplicationEnvironment.DEVELOPMENT) {
+                log.info("Rebuilding database")
+                jdbcTemplate.execute("DROP OWNED BY current_user;")
+            }
+            else {
+                log.warn("Rebuild database mode is only available in development environments")
+            }
         }
 
         var schemaVersion = SchemaVersion.VERSION_ZERO
