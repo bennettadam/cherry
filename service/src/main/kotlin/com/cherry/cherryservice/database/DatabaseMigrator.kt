@@ -8,7 +8,9 @@ import org.apache.commons.logging.LogFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.CommandLineRunner
 import org.springframework.context.ConfigurableApplicationContext
+import org.springframework.jdbc.core.ConnectionCallback
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.StatementCallback
 import org.springframework.jdbc.core.queryForObject
 import org.springframework.stereotype.Component
 
@@ -29,12 +31,22 @@ class DatabaseMigrator(
 
     override fun run(vararg args: String?) {
         if (databaseMigrationMode == DatabaseMigrationMode.REBUILD) {
-            if (applicationEnvironment == ApplicationEnvironment.DEVELOPMENT) {
+            if (setOf(ApplicationEnvironment.DEVELOPMENT, ApplicationEnvironment.TEST).contains(applicationEnvironment)) {
                 log.info("Rebuilding database")
-                jdbcTemplate.execute("DROP OWNED BY current_user;")
+                // get the list of tables and then drop each one
+                val tableDropStatements = jdbcTemplate.queryForList("""
+                    SELECT 'DROP TABLE IF EXISTS "' || tablename || '" CASCADE;'
+                    FROM pg_tables 
+                    WHERE schemaname = 'public'
+                """, String::class.java)
+
+                for (dropStatement in tableDropStatements) {
+                    @Suppress("SqlSourceToSinkFlow")
+                    jdbcTemplate.execute(dropStatement)
+                }
             }
             else {
-                log.warn("Rebuild database mode is only available in development environments")
+                log.warn("Rebuild database mode is only available in development and test environments")
             }
         }
 
@@ -212,10 +224,12 @@ class DatabaseMigrator(
             log.info("Schema version is already ${SchemaVersion.currentVersion.value}, migration not needed")
         }
 
-        // in order to prevent running the application with migration mode enabled indefinitely, we'll force the application to shut down here
-        // this makes migrations explicitly opt-in, to help prevent the scenario of pulling a new version from source
-        // and unexpectedly migrating the whole application (speaking from experience)
-        log.info("*** Application in migration mode, shutting down. Restart the application with the environment variable ${DatabaseMigrationMode.ENVIRONMENT_KEY}=${DatabaseMigrationMode.NONE} to start the service ***")
-        applicationContext.close()
+        if (applicationEnvironment != ApplicationEnvironment.TEST) {
+            // in order to prevent running the application with migration mode enabled indefinitely, we'll force the application to shut down here
+            // this makes migrations explicitly opt-in, to help prevent the scenario of pulling a new version from source
+            // and unexpectedly migrating the whole application (speaking from experience)
+            log.info("*** Application in migration mode, shutting down. Restart the application with the environment variable ${DatabaseMigrationMode.ENVIRONMENT_KEY}=${DatabaseMigrationMode.NONE} to start the service ***")
+            applicationContext.close()
+        }
     }
 }
