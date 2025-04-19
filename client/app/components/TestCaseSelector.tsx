@@ -223,8 +223,8 @@ export default function TestCaseSelector({
 				render: (testCase) => {
 					const isSelected = selectedTestCaseIDs.has(testCase.testCaseID)
 					return (
-            <Checkbox isSelected={isSelected} />
-          )
+						<Checkbox isSelected={isSelected} />
+					)
 				},
 			},
 			{
