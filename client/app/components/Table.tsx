@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import { Checkbox } from './Checkbox'
 
 export interface TableRow<T> {
 	id: string
@@ -19,23 +20,39 @@ type TableProps<T> = {
 }
 
 export function Table<T>({ tableRows, columns, onRowClick }: TableProps<T>) {
+	// compute if all rows are selected
+	const allSelected = tableRows.length > 0 && tableRows.every((r) => r.isSelected)
+	// toggle selection on every row
+	const handleSelectAll = () => {
+		tableRows.forEach((r) => {
+			if (onRowClick && r.isSelected !== !allSelected) {
+				onRowClick(r.data)
+			}
+		})
+	}
+
 	return (
 		<div>
 			<table className="min-w-full divide-y divide-gray-200">
 				<thead>
 					<tr>
-						{columns.map((column) => {
-							return (
-								<th
-									key={column.key}
-									className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
-										column.header ? '' : 'w-2'
-									}`}
-								>
-									{column.header}
-								</th>
-							)
-						})}
+						{columns.map((column, colIndex) => (
+							<th
+								key={column.key}
+								className={`py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
+									column.header ? '' : 'w-2'
+								} ${colIndex === 0 ? 'px-2' : 'px-6'}`}
+							>
+								{colIndex === 0 ? (
+									<button
+										onClick={handleSelectAll}>
+                    <Checkbox isSelected={allSelected} />
+                  </button>
+								) : (
+									column.header
+								)}
+							</th>
+						))}
 					</tr>
 				</thead>
 				<tbody className="bg-white divide-y divide-gray-200">
