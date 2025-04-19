@@ -342,6 +342,7 @@ export default function TestCaseSelector({
 					}))}
 					columns={getTableColumns()}
 					onRowClick={handleToggleTestCase}
+					allowSelectAll={true}
 				/>
 			</div>
 
