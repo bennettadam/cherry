@@ -17,7 +17,7 @@ type TableProps<T> = {
 	tableRows: TableRow<T>[]
 	columns: Column<T>[]
 	onRowClick?: (item: T) => void
-  allowSelectAll?: boolean
+	allowSelectAll?: boolean
 }
 
 export function Table<T>({ tableRows, columns, onRowClick, allowSelectAll }: TableProps<T>) {
