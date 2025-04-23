@@ -9,8 +9,7 @@ import { SelectDropdown } from './SelectDropdown'
 import { Table, type Column } from './Table'
 import { Tools } from '~/utility/Tools'
 import { Project } from '~/models/project'
-import UnfilledCircle from './UnfilledCircle'
-import Checkmark from './Checkmark'
+import { Checkbox } from './Checkbox'
 
 // Example: you might define a union for your filter values.
 // "text" covers both text/number; "select" covers multi-select checkboxes.
@@ -223,10 +222,8 @@ export default function TestCaseSelector({
 				key: 'selection',
 				render: (testCase) => {
 					const isSelected = selectedTestCaseIDs.has(testCase.testCaseID)
-					return isSelected ? (
-						<Checkmark className="h-5 w-5 fill-sky-600" />
-					) : (
-						<UnfilledCircle className="h-5 w-5 fill-gray-400" />
+					return (
+						<Checkbox isSelected={isSelected} />
 					)
 				},
 			},
@@ -345,6 +342,7 @@ export default function TestCaseSelector({
 					}))}
 					columns={getTableColumns()}
 					onRowClick={handleToggleTestCase}
+					allowSelectAll={true}
 				/>
 			</div>
 
